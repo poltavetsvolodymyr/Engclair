@@ -8,8 +8,13 @@
   color: var(--color-on-accent);
   border: none;
   border-radius: var(--radius-md);
+  /* Amber-tinted shadow, so the button looks lit rather than pasted on. */
+  box-shadow: var(--shadow-accent);
+  transition: transform 80ms ease, box-shadow 80ms ease;
 }
 
+/* Pressing pushes it into the page instead of just dimming it. */
 .button:active {
-  filter: brightness(0.9);
+  transform: translateY(1px);
+  box-shadow: var(--shadow-accent-pressed);
 }

@@ -13,13 +13,17 @@
   min-height: 64px;
   padding: var(--space-sm) var(--space-xs);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: none;
   /* Coloured top edge identifies the grade. */
-  border-top-width: 3px;
+  border-top: 3px solid;
   border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: transform 80ms ease, box-shadow 80ms ease;
 }
 
 .button:active {
+  transform: translateY(1px);
+  box-shadow: none;
   background: var(--color-surface-raised);
 }
 

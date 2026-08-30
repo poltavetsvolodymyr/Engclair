@@ -36,7 +36,12 @@ These exist so the app stays easy to extend. Follow them when adding anything.
   class names, so two components can both use `.title` without colliding.
 - The only global CSS is `src/styles/`: `tokens.css` (design tokens as CSS
   custom properties) and `global.css` (reset + base elements). Components style
-  themselves from tokens — never hard-code a colour or spacing value.
+  themselves from tokens — never hard-code a colour or spacing value, including
+  inside `box-shadow`.
+- The theme is a light warm one: cream page, white cards, dark amber accent.
+  Depth comes from the `--shadow-*` tokens, not from outlines — cards are lifted
+  off the page rather than boxed in, and pressable things drop their shadow and
+  shift 1px down. Keep new surfaces consistent with that.
 
 **Each component is a folder** with the component, its styles, its `types/`, any
 component-only helper, and an `index.ts` barrel. Import via the barrel

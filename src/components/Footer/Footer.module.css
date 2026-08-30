@@ -17,6 +17,7 @@
 
 .reset:active {
   color: var(--color-text);
+  background: var(--color-surface-raised);
 }
 
 .note {

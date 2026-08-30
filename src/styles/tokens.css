@@ -4,29 +4,44 @@
  */
 :root {
   /* Surfaces & text.
-     Deliberately warm near-blacks rather than the usual blue-grey, so the
-     amber accents below read as part of the same family instead of sitting
-     on top of a cold background. */
-  --color-bg: #17120d;
-  --color-surface: #221b14;
-  --color-surface-raised: #2e251a;
-  --color-border: #3d3122;
-  --color-text: #f8f4ec;
-  --color-text-muted: #b5a893;
+     Warm cream page with white cards: the card separates from the page by
+     being lighter, not by being outlined, which is what stops the UI reading
+     as flat. */
+  --color-bg: #faf6ef;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f4ede1;
+  --color-border: #ece2d2;
+  --color-text: #2a2018;
+  --color-text-muted: #6f6054;
 
-  /* Amber accent. Measured contrast, all WCAG AAA:
-     accent on bg 11.1:1, accent on surface 10.2:1, on-accent on accent 11.0:1.
-     Amber is far too light to carry white text (2.1:1), so anything sitting on
-     the accent uses the near-black --color-on-accent instead. */
-  --color-accent: #fbbf24;
-  --color-accent-soft: rgba(251, 191, 36, 0.14);
-  --color-on-accent: #1a1309;
+  /* Amber accent, dark enough to sit on white.
+     Measured: accent on white 5.0:1, accent on page 4.7:1, white on accent
+     5.0:1, body text on white 15.9:1, muted text on white 6.0:1 — all AA or
+     better. The light amber used on the old dark theme would have been ~1.5:1
+     here and unreadable. */
+  --color-accent: #b45309;
+  --color-accent-soft: rgba(180, 83, 9, 0.09);
+  --color-on-accent: #ffffff;
 
-  /* Grade accents, warm to cool across the ladder: struggled -> knew it. */
-  --color-grade-again: #ef4444;
-  --color-grade-hard: #f97316;
-  --color-grade-good: #84cc16;
-  --color-grade-easy: #22c55e;
+  /* Grade accents, warm to cool across the ladder: struggled -> knew it.
+     Darkened for a light background; each clears 3:1 against white, the
+     threshold for a non-text UI element. */
+  --color-grade-again: #dc2626;
+  --color-grade-hard: #ea580c;
+  --color-grade-good: #65a30d;
+  --color-grade-easy: #16a34a;
+
+  /* Elevation. Shadows are tinted warm brown rather than black — neutral grey
+     shadows on a cream page look like dirt. Two layers each: a tight contact
+     shadow plus a wide soft one, which is what reads as a real light source. */
+  --shadow-sm: 0 1px 2px rgba(74, 51, 28, 0.05),
+    0 2px 6px -2px rgba(74, 51, 28, 0.08);
+  --shadow-md: 0 1px 2px rgba(74, 51, 28, 0.05),
+    0 10px 26px -10px rgba(74, 51, 28, 0.22);
+  --shadow-accent: 0 1px 2px rgba(146, 64, 14, 0.24),
+    0 8px 18px -6px rgba(146, 64, 14, 0.38);
+  /* Collapsed shadow for the pressed state. */
+  --shadow-accent-pressed: 0 1px 2px rgba(146, 64, 14, 0.3);
 
   /* Spacing scale */
   --space-2xs: 3px;
