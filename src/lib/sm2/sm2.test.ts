@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DAY_MS, INITIAL_SM2, isDue, previewInterval, schedule } from './sm2'
+import { DAY_MS, INITIAL_SM2, isDue, schedule } from './sm2'
 import type { Sm2State } from './types/sm2-state'
 
 /** Fixed clock so every assertion about `due` is exact. */
@@ -151,23 +151,5 @@ describe('isDue', () => {
 
     expect(isDue(reviewed, reviewed.due)).toBe(true)
     expect(isDue(reviewed, reviewed.due + 1)).toBe(true)
-  })
-})
-
-describe('previewInterval', () => {
-  it('reports what each grade would schedule', () => {
-    const twiceLearned = schedule(schedule(INITIAL_SM2, GOOD, NOW), GOOD, NOW)
-
-    expect(previewInterval(twiceLearned, AGAIN)).toBe(1)
-    expect(previewInterval(twiceLearned, GOOD)).toBe(15)
-  })
-
-  it('leaves the state untouched', () => {
-    const state = schedule(INITIAL_SM2, GOOD, NOW)
-    const snapshot = { ...state }
-
-    previewInterval(state, EASY)
-
-    expect(state).toEqual(snapshot)
   })
 })

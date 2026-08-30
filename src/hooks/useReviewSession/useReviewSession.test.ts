@@ -150,12 +150,6 @@ describe('useReviewSession', () => {
 
       expect(Object.keys(loadProgress()).sort()).toEqual(['a', 'b'])
     })
-
-    it('exposes the pre-review state so the UI can preview intervals', () => {
-      const { result } = renderHook(() => useReviewSession(DECK))
-
-      expect(result.current.currentState).toEqual(INITIAL_SM2)
-    })
   })
 
   describe('reset', () => {

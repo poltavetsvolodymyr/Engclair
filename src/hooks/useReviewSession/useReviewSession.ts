@@ -32,9 +32,6 @@ export function useReviewSession(cards: Card[]): ReviewSession {
   const [reviewedCount, setReviewedCount] = useState(0)
 
   const currentCard = queue.length > 0 ? cardsById.get(queue[0]) : undefined
-  const currentState = currentCard
-    ? progress[currentCard.id] ?? INITIAL_SM2
-    : INITIAL_SM2
 
   const reveal = useCallback(() => setRevealed(true), [])
 
@@ -72,7 +69,6 @@ export function useReviewSession(cards: Card[]): ReviewSession {
 
   return {
     currentCard,
-    currentState,
     revealed,
     reviewedCount,
     remaining: queue.length,

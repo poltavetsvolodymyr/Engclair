@@ -80,8 +80,3 @@ export function isDue(state: Sm2State | undefined, now: number = Date.now()): bo
   if (!state || state.lastReviewed === null) return true
   return state.due <= now
 }
-
-/** Preview the interval (in days) a given grade would produce, without applying it. */
-export function previewInterval(state: Sm2State, quality: number): number {
-  return schedule(state, quality).interval
-}

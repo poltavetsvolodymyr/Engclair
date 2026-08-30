@@ -44,21 +44,11 @@
   font-weight: 600;
 }
 
-.interval {
-  font-size: 0.75rem;
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
-}
-
+/* Two lines per button now, so the hint no longer has to be squeezed. */
 .hint {
-  font-size: var(--text-2xs);
-  line-height: 1.1;
+  font-size: var(--text-xs);
+  line-height: 1.2;
   color: var(--color-text-muted);
   text-align: center;
-}
-
-@media (min-width: 380px) {
-  .hint {
-    font-size: 0.65rem;
-  }
+  text-wrap: balance;
 }

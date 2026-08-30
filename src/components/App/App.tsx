@@ -41,11 +41,7 @@ export function App() {
       {session.currentCard ? (
         <div className={styles.actions}>
           {session.revealed ? (
-            <GradeButtons
-              text={ui.grades}
-              state={session.currentState}
-              onGrade={session.grade}
-            />
+            <GradeButtons text={ui.grades} onGrade={session.grade} />
           ) : (
             <RevealButton label={ui.card.showAnswer} onClick={session.reveal} />
           )}

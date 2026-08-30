@@ -93,7 +93,7 @@ categories, English-only) and should keep passing as the deck grows.
 │       ├── StatsBar/
 │       ├── Flashcard/
 │       ├── RevealButton/
-│       ├── GradeButtons/          + format-interval.ts (component-only helper)
+│       ├── GradeButtons/
 │       ├── SessionMessage/
 │       └── Footer/                Owns the reset confirmation
 └── .github/workflows/deploy.yml   Build on push to main, deploy via Pages
@@ -109,8 +109,11 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   One card is shown at a time.
 - **Reveal → grade**: the user reveals the answer, then picks
   `Again / Hard / Good / Easy`. These map to SM-2 recall qualities `2 / 3 / 4 / 5`
-  (`lib/review/grades.ts`). Each button previews the resulting interval via
-  `lib/sm2.previewInterval`.
+  (`lib/review/grades.ts`). The buttons deliberately show no interval preview:
+  under SM-2 the interval is derived from the ease factor *before* the grade
+  updates it, so Hard, Good and Easy always predict the same number — a grade
+  only changes the interval of the *following* review. Showing it looked broken
+  and leaked the algorithm at the user.
 - **Scheduling** (`lib/sm2/sm2.ts`): classic SM-2. Quality `< 3` resets
   `repetitions` and sets the interval to 1 day; otherwise the interval grows
   `1 → 6 → round(interval × easeFactor)`. The ease factor is always updated and
