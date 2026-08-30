@@ -1,0 +1,15 @@
+.button {
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: var(--space-lg) var(--space-md);
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.button:active {
+  filter: brightness(0.9);
+}

@@ -1,14 +1,15 @@
-import type { Sm2State } from './sm2'
+import type { ProgressMap } from './types/progress-map'
 
 /**
- * Persistence for review progress. One localStorage key holds a map of
- * card id -> SM-2 state. All access is wrapped so a disabled or full
- * storage never crashes the app (it just behaves as a fresh start).
+ * Persistence for review progress: one localStorage key holding a
+ * `card id -> Sm2State` map.
+ *
+ * Every access is wrapped, so a disabled or full storage (private mode, quota)
+ * degrades to "fresh start" instead of crashing the app.
+ *
+ * Bump the key suffix if the persisted shape ever changes.
  */
-
 const STORAGE_KEY = 'engclair:progress:v1'
-
-export type ProgressMap = Record<string, Sm2State>
 
 export function loadProgress(): ProgressMap {
   try {

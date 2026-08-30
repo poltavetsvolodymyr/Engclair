@@ -1,0 +1,15 @@
+.header {
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-xl);
+  letter-spacing: 0.02em;
+}
+
+.tagline {
+  margin: var(--space-xs) 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}

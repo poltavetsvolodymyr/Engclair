@@ -1,24 +1,13 @@
+import type { Sm2State } from './types/sm2-state'
+
 /**
  * SuperMemo SM-2 spaced-repetition algorithm.
  *
  * Reference: https://super-memory.com/english/ol/sm2.htm
  *
- * A grade of 0–5 ("quality of recall") is fed in; the function returns the
- * updated scheduling state, including the next due timestamp.
+ * Pure and side-effect free: a grade of 0-5 ("quality of recall") goes in, the
+ * updated scheduling state comes out. Nothing here knows about React or storage.
  */
-
-export interface Sm2State {
-  /** Number of consecutive successful recalls (quality >= 3). */
-  repetitions: number
-  /** Ease factor, clamped to a minimum of 1.3. Starts at 2.5. */
-  easeFactor: number
-  /** Current inter-repetition interval, in whole days. */
-  interval: number
-  /** Epoch milliseconds when the card is next due. */
-  due: number
-  /** Epoch milliseconds of the last review, or null if never reviewed. */
-  lastReviewed: number | null
-}
 
 export const DAY_MS = 24 * 60 * 60 * 1000
 

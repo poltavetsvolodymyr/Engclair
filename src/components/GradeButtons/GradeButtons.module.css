@@ -1,0 +1,64 @@
+.grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  /* Coloured top edge identifies the grade. */
+  border-top-width: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.button:active {
+  background: var(--color-surface-raised);
+}
+
+.again {
+  border-top-color: var(--color-grade-again);
+}
+
+.hard {
+  border-top-color: var(--color-grade-hard);
+}
+
+.good {
+  border-top-color: var(--color-grade-good);
+}
+
+.easy {
+  border-top-color: var(--color-grade-easy);
+}
+
+.label {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.interval {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  font-size: var(--text-2xs);
+  line-height: 1.1;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (min-width: 380px) {
+  .hint {
+    font-size: 0.65rem;
+  }
+}

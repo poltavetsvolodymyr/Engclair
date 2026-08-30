@@ -1,4 +1,4 @@
-import type { Content } from './types'
+import type { Content } from '@/types'
 
 /**
  * The single source of truth for everything the user sees: interface strings
@@ -8,11 +8,15 @@ import type { Content } from './types'
  *  - English only. No second language anywhere, including definitions.
  *  - Keep card `id`s stable; they key the saved SM-2 progress.
  *  - Keep the deck balanced: equal numbers of `vocabulary` and `phrasal-verb`.
+ *
+ * Each `ui` section maps to one component under `src/components/`.
  */
 export const content: Content = {
   ui: {
-    appTitle: 'Engclair',
-    tagline: 'English vocabulary and phrasal verbs, one card at a time.',
+    header: {
+      appTitle: 'Engclair',
+      tagline: 'English vocabulary and phrasal verbs, one card at a time.',
+    },
     stats: {
       reviewed: 'Reviewed',
       remaining: 'Left',

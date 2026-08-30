@@ -1,0 +1,22 @@
+/* Layout only. Mobile-first: a single centred column sized for one-thumb use. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding: max(var(--space-lg), env(safe-area-inset-top)) var(--space-lg)
+    max(var(--space-lg), env(safe-area-inset-bottom));
+  min-height: 100dvh;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+}
+
+.actions {
+  display: flex;
+}
