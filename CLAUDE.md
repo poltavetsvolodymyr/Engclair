@@ -48,6 +48,15 @@ component-only helper, and an `index.ts` barrel. Import via the barrel
 **`@/` is an alias for `src/`** — declared in both `vite.config.ts`
 (`resolve.alias`) and `tsconfig.app.json` (`paths`). Change one, change the other.
 
+**Tests sit next to what they test** (`sm2.ts` → `sm2.test.ts`) and are written
+with Vitest. Suites run in Node by default; the ones needing `localStorage` or
+React opt in with a `@vitest-environment jsdom` docblock at the top of the file.
+
+Tests use their own fixtures and must not import `src/content.ts` — otherwise
+adding a card breaks unrelated suites. The one exception is `content.test.ts`,
+which exists precisely to check the deck's invariants (unique ids, balanced
+categories, English-only) and should keep passing as the deck grows.
+
 ## Project structure
 
 ```
@@ -116,16 +125,19 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
 
 | Command           | What it does                                |
 | ----------------- | ------------------------------------------- |
-| `npm install`     | Install dependencies                        |
-| `npm run dev`     | Local dev server (Vite)                     |
-| `npm run build`   | Type-check (`tsc -b`) then production build |
-| `npm run preview` | Serve the built `dist/` locally             |
+| `npm install`      | Install dependencies                        |
+| `npm run dev`      | Local dev server (Vite)                     |
+| `npm test`         | Run the test suite once (Vitest)            |
+| `npm run test:watch` | Re-run tests on change                    |
+| `npm run build`    | Type-check (`tsc -b`) then production build |
+| `npm run preview`  | Serve the built `dist/` locally             |
 
 Note: `npm run preview` and the deployed site serve under the `/Engclair/` base
 path; `npm run dev` serves under `/Engclair/` too (Vite applies `base` in dev).
 
 ## Deployment
 
-Push to `main` → `.github/workflows/deploy.yml` runs `npm ci && npm run build`
-and publishes `dist/` with `actions/deploy-pages`. Requires repo setting
+Push to `main` → `.github/workflows/deploy.yml` runs `npm ci`, `npm test`, then
+`npm run build`, and publishes `dist/` with `actions/deploy-pages`. A failing
+test stops the job before the build, so it never deploys. Requires repo setting
 **Settings → Pages → Build and deployment → Source = GitHub Actions**.
