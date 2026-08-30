@@ -31,10 +31,12 @@ export const content: Content = {
         'phrasal-verb': 'Phrasal verb',
       },
     },
+    // The four hints form one ladder — how much effort the recall took —
+    // so that no two of them describe the same experience.
     grades: {
-      again: { label: 'Again', hint: 'Forgot it' },
-      hard: { label: 'Hard', hint: 'Barely recalled' },
-      good: { label: 'Good', hint: 'Recalled with effort' },
+      again: { label: 'Again', hint: 'New or forgotten' },
+      hard: { label: 'Hard', hint: 'Only just got it' },
+      good: { label: 'Good', hint: 'Took a moment' },
       easy: { label: 'Easy', hint: 'Knew it instantly' },
     },
     empty: {
