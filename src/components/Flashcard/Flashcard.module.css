@@ -15,8 +15,8 @@
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  background: var(--color-surface-raised);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
   border-radius: var(--radius-pill);
 }
 
@@ -62,7 +62,7 @@
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
+  color: var(--color-accent);
 }
 
 .sectionLabel:first-child {

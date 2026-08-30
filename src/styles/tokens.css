@@ -3,21 +3,30 @@
  * styles itself from these, so a theme change happens in one place.
  */
 :root {
-  /* Surfaces & text */
-  --color-bg: #0f172a;
-  --color-surface: #1e293b;
-  --color-surface-raised: #273449;
-  --color-border: #334155;
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
-  --color-accent: #3b82f6;
-  --color-on-accent: #ffffff;
+  /* Surfaces & text.
+     Deliberately warm near-blacks rather than the usual blue-grey, so the
+     amber accents below read as part of the same family instead of sitting
+     on top of a cold background. */
+  --color-bg: #17120d;
+  --color-surface: #221b14;
+  --color-surface-raised: #2e251a;
+  --color-border: #3d3122;
+  --color-text: #f8f4ec;
+  --color-text-muted: #b5a893;
 
-  /* Grade accents */
+  /* Amber accent. Measured contrast, all WCAG AAA:
+     accent on bg 11.1:1, accent on surface 10.2:1, on-accent on accent 11.0:1.
+     Amber is far too light to carry white text (2.1:1), so anything sitting on
+     the accent uses the near-black --color-on-accent instead. */
+  --color-accent: #fbbf24;
+  --color-accent-soft: rgba(251, 191, 36, 0.14);
+  --color-on-accent: #1a1309;
+
+  /* Grade accents, warm to cool across the ladder: struggled -> knew it. */
   --color-grade-again: #ef4444;
   --color-grade-hard: #f97316;
-  --color-grade-good: #22c55e;
-  --color-grade-easy: #38bdf8;
+  --color-grade-good: #84cc16;
+  --color-grade-easy: #22c55e;
 
   /* Spacing scale */
   --space-2xs: 3px;
