@@ -38,6 +38,12 @@ These exist so the app stays easy to extend. Follow them when adding anything.
   custom properties) and `global.css` (reset + base elements). Components style
   themselves from tokens — never hard-code a colour or spacing value, including
   inside `box-shadow`.
+- **The accent picker is temporary.** Everything marked `[TEMPORARY]` exists
+  only so an accent colour can be chosen from the live app. To remove it, delete
+  `components/ThemePicker/`, `hooks/useTheme/`, `lib/theme/`, the `ui.themes`
+  block in `content.ts`, `ThemePickerText` in `types/ui.ts`, `types/theme.ts`,
+  and the two lines in `App.tsx` — then fold the winning accent's four
+  properties from `themes.css` back into `tokens.css` and delete `themes.css`.
 - The theme is a light warm one: cream page, white cards, dark amber accent.
   Depth comes from the `--shadow-*` tokens, not from outlines — cards are lifted
   off the page rather than boxed in, and pressable things drop their shadow and
@@ -62,6 +68,11 @@ adding a card breaks unrelated suites. The one exception is `content.test.ts`,
 which exists precisely to check the deck's invariants (unique ids, balanced
 categories, English-only) and should keep passing as the deck grows.
 
+`src/test-setup.ts` unmounts rendered trees after each test. Testing Library
+only auto-cleans when Vitest runs with `globals: true`, which we do not — do not
+remove that file, or component tests will start matching leftover DOM from
+earlier tests in the same file.
+
 ## Project structure
 
 ```
@@ -80,18 +91,22 @@ categories, English-only) and should keep passing as the deck grows.
 │   │   ├── ui.ts                  One text type per screen region + UiText
 │   │   ├── content.ts             Content = { ui, cards }
 │   │   └── index.ts               Barrel
+│   ├── test-setup.ts              Per-test DOM cleanup (see Testing above)
 │   ├── styles/
 │   │   ├── tokens.css             Design tokens (the only global values)
+│   │   ├── themes.css             Accent themes; must load after tokens.css
 │   │   └── global.css             Reset + base element styles
 │   ├── lib/                       Framework-free logic
 │   │   ├── sm2/                   The algorithm; pure, no React, no storage
 │   │   ├── storage/               localStorage load/save/clear of progress
+│   │   ├── theme/                 Theme list + persistence  [TEMPORARY]
 │   │   └── review/                Grade -> SM-2 quality bridge
 │   ├── hooks/
-│   │   └── useReviewSession/      Queue, reveal, grading, persistence
-│   │       ├── useReviewSession.ts
-│   │       ├── build-queue.ts     Hook-only helper
-│   │       └── types/review-session.ts
+│   │   ├── useReviewSession/      Queue, reveal, grading, persistence
+│   │   │   ├── useReviewSession.ts
+│   │   │   ├── build-queue.ts     Hook-only helper
+│   │   │   └── types/review-session.ts
+│   │   └── useTheme/              Accent theme state  [TEMPORARY]
 │   └── components/                One folder per component
 │       ├── App/                   Composition root; layout only
 │       ├── Header/
@@ -100,6 +115,7 @@ categories, English-only) and should keep passing as the deck grows.
 │       ├── RevealButton/
 │       ├── GradeButtons/
 │       ├── SessionMessage/
+│       ├── ThemePicker/           Accent swatches  [TEMPORARY]
 │       └── Footer/                Owns the reset confirmation
 └── .github/workflows/deploy.yml   Build on push to main, deploy via Pages
 ```

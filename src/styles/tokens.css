@@ -14,13 +14,9 @@
   --color-text: #2a2018;
   --color-text-muted: #6f6054;
 
-  /* Amber accent, dark enough to sit on white.
-     Measured: accent on white 5.0:1, accent on page 4.7:1, white on accent
-     5.0:1, body text on white 15.9:1, muted text on white 6.0:1 — all AA or
-     better. The light amber used on the old dark theme would have been ~1.5:1
-     here and unreadable. */
-  --color-accent: #b45309;
-  --color-accent-soft: rgba(180, 83, 9, 0.09);
+  /* The accent itself lives in themes.css, which is swappable at runtime.
+     Body text on white measures 15.9:1 and muted text 6.0:1 regardless of
+     which accent is active, because no theme touches these. */
   --color-on-accent: #ffffff;
 
   /* Grade accents, warm to cool across the ladder: struggled -> knew it.
@@ -38,10 +34,8 @@
     0 2px 6px -2px rgba(74, 51, 28, 0.08);
   --shadow-md: 0 1px 2px rgba(74, 51, 28, 0.05),
     0 10px 26px -10px rgba(74, 51, 28, 0.22);
-  --shadow-accent: 0 1px 2px rgba(146, 64, 14, 0.24),
-    0 8px 18px -6px rgba(146, 64, 14, 0.38);
-  /* Collapsed shadow for the pressed state. */
-  --shadow-accent-pressed: 0 1px 2px rgba(146, 64, 14, 0.3);
+  /* --shadow-accent and --shadow-accent-pressed are accent-tinted, so they
+     live alongside the accent in themes.css. */
 
   /* Spacing scale */
   --space-2xs: 3px;

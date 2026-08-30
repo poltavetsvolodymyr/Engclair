@@ -51,6 +51,18 @@ export const content: Content = {
       button: 'Reset progress',
       confirm: 'Reset all learning progress? This cannot be undone.',
     },
+    // Temporary, while an accent colour is being chosen. Delete this section
+    // together with the ThemePicker component once one is settled on.
+    themes: {
+      label: 'Accent colour',
+      names: {
+        amber: 'Amber',
+        terracotta: 'Terracotta',
+        crimson: 'Crimson',
+        forest: 'Forest',
+        indigo: 'Indigo',
+      },
+    },
     footer: 'Progress is saved on this device only.',
   },
 

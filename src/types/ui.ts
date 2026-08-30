@@ -1,5 +1,6 @@
 import type { CardCategory } from './card'
 import type { GradeKey } from './grade'
+import type { ThemeId } from './theme'
 
 /**
  * Text slices of the interface. One type per screen region, so each component
@@ -48,6 +49,12 @@ export interface ResetText {
   confirm: string
 }
 
+/** Temporary, while an accent is being chosen. Delete with the picker. */
+export interface ThemePickerText {
+  label: string
+  names: Record<ThemeId, string>
+}
+
 export interface UiText {
   header: HeaderText
   stats: StatsText
@@ -58,5 +65,7 @@ export interface UiText {
   /** Shown after the last due card of a session is graded. */
   done: SessionMessageText
   reset: ResetText
+  /** Temporary, while an accent is being chosen. Delete with the picker. */
+  themes: ThemePickerText
   footer: string
 }

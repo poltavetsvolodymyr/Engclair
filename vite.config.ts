@@ -21,5 +21,6 @@ export default defineConfig({
     // proves lib/ really is framework-free.
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
+    setupFiles: ['./src/test-setup.ts'],
   },
 })

@@ -1,0 +1,52 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.label {
+  margin: 0;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.swatches {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* The swatch paints itself with the accent its own data-swatch sets. */
+.swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.swatch:active {
+  transform: translateY(1px);
+}
+
+/* Selected swatch gets a ring, drawn as a spread shadow so it needs no extra
+   element and does not shift the layout. */
+.swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 3px var(--color-surface),
+    0 0 0 5px var(--color-accent);
+}
+
+.selectedName {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

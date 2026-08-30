@@ -1,0 +1,68 @@
+/**
+ * Accent themes.
+ *
+ * Each block is written to match two selectors at once:
+ *   [data-theme='x']  — set on <html>, repaints the whole app
+ *   [data-swatch='x'] — set on one picker button, so the swatch shows its own
+ *                       colour without the value being written down twice
+ *
+ * Only accent tokens change. Surfaces, text and the shadow scale are shared,
+ * which is why every theme keeps the same measured contrast on body text.
+ *
+ * Contrast of accent against white / cream, and white against accent:
+ *   amber      5.0 / 4.7 / 5.0
+ *   terracotta 5.2 / 4.8 / 5.2
+ *   crimson    8.0 / 7.4 / 8.0
+ *   forest     7.1 / 6.6 / 7.1
+ *   indigo     7.9 / 7.3 / 7.9
+ * All AA or better; the accent never carries anything but white text.
+ */
+
+/* `:root` here makes amber the default before any theme is chosen, so the app
+   is correctly painted even if JavaScript never runs. Later blocks share the
+   same specificity and win purely on source order when their attribute is set. */
+:root,
+[data-theme='amber'],
+[data-swatch='amber'] {
+  --color-accent: #b45309;
+  --color-accent-soft: rgba(180, 83, 9, 0.09);
+  --shadow-accent: 0 1px 2px rgba(146, 64, 14, 0.24),
+    0 8px 18px -6px rgba(146, 64, 14, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(146, 64, 14, 0.3);
+}
+
+[data-theme='terracotta'],
+[data-swatch='terracotta'] {
+  --color-accent: #c2410c;
+  --color-accent-soft: rgba(194, 65, 12, 0.09);
+  --shadow-accent: 0 1px 2px rgba(154, 52, 18, 0.24),
+    0 8px 18px -6px rgba(154, 52, 18, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(154, 52, 18, 0.3);
+}
+
+[data-theme='crimson'],
+[data-swatch='crimson'] {
+  --color-accent: #9f1239;
+  --color-accent-soft: rgba(159, 18, 57, 0.09);
+  --shadow-accent: 0 1px 2px rgba(136, 19, 55, 0.24),
+    0 8px 18px -6px rgba(136, 19, 55, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(136, 19, 55, 0.3);
+}
+
+[data-theme='forest'],
+[data-swatch='forest'] {
+  --color-accent: #3f6212;
+  --color-accent-soft: rgba(63, 98, 18, 0.09);
+  --shadow-accent: 0 1px 2px rgba(54, 83, 20, 0.24),
+    0 8px 18px -6px rgba(54, 83, 20, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(54, 83, 20, 0.3);
+}
+
+[data-theme='indigo'],
+[data-swatch='indigo'] {
+  --color-accent: #4338ca;
+  --color-accent-soft: rgba(67, 56, 202, 0.09);
+  --shadow-accent: 0 1px 2px rgba(55, 48, 163, 0.24),
+    0 8px 18px -6px rgba(55, 48, 163, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(55, 48, 163, 0.3);
+}

@@ -5,8 +5,10 @@ import { Header } from '@/components/Header'
 import { RevealButton } from '@/components/RevealButton'
 import { SessionMessage } from '@/components/SessionMessage'
 import { StatsBar } from '@/components/StatsBar'
+import { ThemePicker } from '@/components/ThemePicker'
 import { content } from '@/content'
 import { useReviewSession } from '@/hooks/useReviewSession'
+import { useTheme } from '@/hooks/useTheme'
 
 import styles from './App.module.css'
 
@@ -15,6 +17,7 @@ const { ui, cards } = content
 /** Composition root: wires the review session to the presentational components. */
 export function App() {
   const session = useReviewSession(cards)
+  const { theme, setTheme } = useTheme()
 
   return (
     <div className={styles.app}>
@@ -47,6 +50,9 @@ export function App() {
           )}
         </div>
       ) : null}
+
+      {/* Temporary, while an accent is being chosen. */}
+      <ThemePicker text={ui.themes} selected={theme} onSelect={setTheme} />
 
       <Footer text={ui.reset} note={ui.footer} onReset={session.reset} />
     </div>
