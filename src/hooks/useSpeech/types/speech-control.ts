@@ -8,7 +8,7 @@ export interface SpeechControl {
   speak: (text: string) => void
   /** Every English voice installed, best first. Empty until the list arrives. */
   voices: VoiceOption[]
-  /** URI of the voice that will actually speak, chosen or fallen back to. */
-  voiceURI: string | null
-  setVoice: (uri: string) => void
+  /** Id of the voice that will actually speak, chosen or fallen back to. */
+  voiceId: string | null
+  setVoice: (id: string) => void
 }

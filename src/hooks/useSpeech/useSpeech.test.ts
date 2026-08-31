@@ -25,6 +25,11 @@ function voice(name: string, lang: string, localService: boolean): SpeechSynthes
   return { name, lang, localService, voiceURI: `uri:${name}`, default: false }
 }
 
+/** How lib/speech identifies the voice `voice()` above would build. */
+function idOf(name: string, lang: string): string {
+  return `uri:${name}|${name}|${lang}`
+}
+
 /** A stand-in for the speech API, including the EventTarget half of it. */
 function installSpeech(voices: SpeechSynthesisVoice[] = []) {
   const spoken: FakeUtterance[] = []
@@ -136,20 +141,20 @@ describe('useSpeech voices', () => {
 
     const { result } = renderHook(() => useSpeech())
 
-    expect(result.current.voiceURI).toBe('uri:Samantha')
+    expect(result.current.voiceId).toBe(idOf('Samantha', 'en-US'))
   })
 
   it('remembers a chosen voice across mounts', () => {
     installSpeech([voice('Daniel', 'en-GB', false), voice('Samantha', 'en-US', true)])
 
     const first = renderHook(() => useSpeech())
-    act(() => first.result.current.setVoice('uri:Daniel'))
-    expect(first.result.current.voiceURI).toBe('uri:Daniel')
+    act(() => first.result.current.setVoice(idOf('Daniel', 'en-GB')))
+    expect(first.result.current.voiceId).toBe(idOf('Daniel', 'en-GB'))
     first.unmount()
 
-    expect(localStorage.getItem(VOICE_KEY)).toBe('uri:Daniel')
+    expect(localStorage.getItem(VOICE_KEY)).toBe(idOf('Daniel', 'en-GB'))
     const second = renderHook(() => useSpeech())
-    expect(second.result.current.voiceURI).toBe('uri:Daniel')
+    expect(second.result.current.voiceId).toBe(idOf('Daniel', 'en-GB'))
   })
 
   it('speaks with the chosen voice', () => {
@@ -159,7 +164,7 @@ describe('useSpeech voices', () => {
     ])
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.setVoice('uri:Daniel'))
+    act(() => result.current.setVoice(idOf('Daniel', 'en-GB')))
     act(() => result.current.speak('ubiquitous'))
 
     expect(spoken[0].voice?.name).toBe('Daniel')
@@ -172,6 +177,6 @@ describe('useSpeech voices', () => {
 
     const { result } = renderHook(() => useSpeech())
 
-    expect(result.current.voiceURI).toBe('uri:Samantha')
+    expect(result.current.voiceId).toBe(idOf('Samantha', 'en-US'))
   })
 })

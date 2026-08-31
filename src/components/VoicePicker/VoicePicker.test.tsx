@@ -11,8 +11,8 @@ import { VoicePicker } from './VoicePicker'
 const TEXT = { label: 'Voice' }
 
 const VOICES: VoiceOption[] = [
-  { uri: 'uri:Samantha', name: 'Samantha', lang: 'en-US', local: true },
-  { uri: 'uri:Daniel', name: 'Daniel', lang: 'en-GB', local: false },
+  { id: 'id:Samantha', name: 'Samantha', lang: 'en-US', local: true },
+  { id: 'id:Daniel', name: 'Daniel', lang: 'en-GB', local: false },
 ]
 
 describe('VoicePicker', () => {
@@ -21,7 +21,7 @@ describe('VoicePicker', () => {
       <VoicePicker
         text={TEXT}
         voices={VOICES}
-        selected="uri:Samantha"
+        selected="id:Samantha"
         onSelect={vi.fn()}
       />,
     )
@@ -34,7 +34,7 @@ describe('VoicePicker', () => {
       <VoicePicker
         text={TEXT}
         voices={VOICES}
-        selected="uri:Samantha"
+        selected="id:Samantha"
         onSelect={vi.fn()}
       />,
     )
@@ -47,10 +47,10 @@ describe('VoicePicker', () => {
 
   it('shows which voice is in use', () => {
     render(
-      <VoicePicker text={TEXT} voices={VOICES} selected="uri:Daniel" onSelect={vi.fn()} />,
+      <VoicePicker text={TEXT} voices={VOICES} selected="id:Daniel" onSelect={vi.fn()} />,
     )
 
-    expect(screen.getByRole<HTMLSelectElement>('combobox').value).toBe('uri:Daniel')
+    expect(screen.getByRole<HTMLSelectElement>('combobox').value).toBe('id:Daniel')
   })
 
   it('reports the voice that was picked', () => {
@@ -59,15 +59,15 @@ describe('VoicePicker', () => {
       <VoicePicker
         text={TEXT}
         voices={VOICES}
-        selected="uri:Samantha"
+        selected="id:Samantha"
         onSelect={onSelect}
       />,
     )
 
     fireEvent.change(screen.getByRole('combobox'), {
-      target: { value: 'uri:Daniel' },
+      target: { value: 'id:Daniel' },
     })
 
-    expect(onSelect).toHaveBeenCalledWith('uri:Daniel')
+    expect(onSelect).toHaveBeenCalledWith('id:Daniel')
   })
 })

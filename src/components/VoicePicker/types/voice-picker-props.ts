@@ -5,7 +5,7 @@ export interface VoicePickerProps {
   text: VoicePickerText
   /** English voices installed on the device, best first. */
   voices: VoiceOption[]
-  /** URI of the voice currently in use. */
+  /** Id of the voice currently in use. */
   selected: string | null
-  onSelect: (uri: string) => void
+  onSelect: (id: string) => void
 }

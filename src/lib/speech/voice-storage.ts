@@ -6,7 +6,7 @@
  */
 const STORAGE_KEY = 'engclair:voice:v1'
 
-export function loadVoiceUri(): string | null {
+export function loadVoiceId(): string | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return typeof raw === 'string' && raw.length > 0 ? raw : null
@@ -15,9 +15,9 @@ export function loadVoiceUri(): string | null {
   }
 }
 
-export function saveVoiceUri(uri: string): void {
+export function saveVoiceId(id: string): void {
   try {
-    localStorage.setItem(STORAGE_KEY, uri)
+    localStorage.setItem(STORAGE_KEY, id)
   } catch {
     // Ignore: private mode, quota exceeded, etc.
   }

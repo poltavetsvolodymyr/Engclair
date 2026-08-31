@@ -2,9 +2,9 @@ export {
   isSpeechSupported,
   listEnglishVoices,
   onVoicesChanged,
-  resolveVoiceUri,
+  resolveVoiceId,
   speak,
   stopSpeaking,
 } from './speech'
-export { loadVoiceUri, saveVoiceUri } from './voice-storage'
+export { loadVoiceId, saveVoiceId } from './voice-storage'
 export type { SpeakOptions, VoiceOption } from './types/speak-options'

@@ -7,7 +7,7 @@ import {
   isSpeechSupported,
   listEnglishVoices,
   onVoicesChanged,
-  resolveVoiceUri,
+  resolveVoiceId,
   speak,
   stopSpeaking,
 } from './speech'
@@ -31,6 +31,11 @@ function voice(
   name = `${lang}${localService ? ' (local)' : ' (remote)'}`,
 ): SpeechSynthesisVoice {
   return { lang, localService, name, voiceURI: `uri:${name}`, default: false }
+}
+
+/** How lib/speech identifies the voice `voice()` above would build. */
+function idOf(name: string, lang: string): string {
+  return `uri:${name}|${name}|${lang}`
 }
 
 /** Installs a stand-in for the speech API and hands back what it recorded. */
@@ -222,7 +227,7 @@ describe('listEnglishVoices', () => {
       voice('en-AU', true, 'Karen'),
     ])
 
-    expect(listEnglishVoices()[0].uri).toBe(resolveVoiceUri(null))
+    expect(listEnglishVoices()[0].id).toBe(resolveVoiceId(null))
   })
 
   it('lists a voice once even when the device repeats it', () => {
@@ -231,23 +236,33 @@ describe('listEnglishVoices', () => {
 
     expect(listEnglishVoices()).toHaveLength(1)
   })
+
+  it('keeps two different voices that share a URI', () => {
+    // Nothing in the spec makes voiceURI unique. Collapsing on it alone hid
+    // whichever voice came second — and made picking one play the other.
+    const compact = voice('en-US', true, 'Ava')
+    const enhanced = { ...voice('en-US', true, 'Ava (Enhanced)'), voiceURI: compact.voiceURI }
+    installSpeech([compact, enhanced])
+
+    expect(listEnglishVoices().map((v) => v.name)).toEqual(['Ava', 'Ava (Enhanced)'])
+  })
 })
 
-describe('resolveVoiceUri', () => {
+describe('resolveVoiceId', () => {
   it('is null on a device without the API', () => {
-    expect(resolveVoiceUri('uri:Samantha')).toBeNull()
+    expect(resolveVoiceId(idOf('Samantha', 'en-US'))).toBeNull()
   })
 
   it('keeps the chosen voice when it is still installed', () => {
     installSpeech([voice('en-US', true, 'Samantha'), voice('en-GB', false, 'Daniel')])
 
-    expect(resolveVoiceUri('uri:Daniel')).toBe('uri:Daniel')
+    expect(resolveVoiceId(idOf('Daniel', 'en-GB'))).toBe(idOf('Daniel', 'en-GB'))
   })
 
   it('falls back to the best voice when the chosen one is gone', () => {
     installSpeech([voice('en-US', true, 'Samantha')])
 
-    expect(resolveVoiceUri('uri:Deleted')).toBe('uri:Samantha')
+    expect(resolveVoiceId('uri:Deleted|Deleted|en-US')).toBe(idOf('Samantha', 'en-US'))
   })
 })
 
@@ -258,7 +273,7 @@ describe('speak with a chosen voice', () => {
       voice('en-GB', false, 'Daniel'),
     ])
 
-    speak('ubiquitous', { voiceURI: 'uri:Daniel' })
+    speak('ubiquitous', { voiceId: idOf('Daniel', 'en-GB') })
 
     expect(spoken[0].voice?.name).toBe('Daniel')
     expect(spoken[0].lang).toBe('en-GB')
@@ -267,7 +282,7 @@ describe('speak with a chosen voice', () => {
   it('ignores a chosen voice that is no longer installed', () => {
     const { spoken } = installSpeech([voice('en-US', true, 'Samantha')])
 
-    speak('ubiquitous', { voiceURI: 'uri:Deleted' })
+    speak('ubiquitous', { voiceId: 'uri:Deleted|Deleted|en-US' })
 
     expect(spoken[0].voice?.name).toBe('Samantha')
   })

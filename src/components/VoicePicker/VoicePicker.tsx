@@ -18,7 +18,7 @@ export function VoicePicker({ text, voices, selected, onSelect }: VoicePickerPro
         onChange={(event) => onSelect(event.target.value)}
       >
         {voices.map((voice) => (
-          <option key={voice.uri} value={voice.uri}>
+          <option key={voice.id} value={voice.id}>
             {voice.name} · {voice.lang}
           </option>
         ))}

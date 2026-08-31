@@ -24,11 +24,22 @@ function isEnglish(voice: SpeechSynthesisVoice): boolean {
 }
 
 /**
+ * A stable identity for a voice.
+ *
+ * `voiceURI` alone is not enough: nothing in the spec makes it unique, and a
+ * device may well hand two entries the same one. Keying on it alone would drop
+ * a real voice from the list, and — worse — would make picking one of them
+ * play the other.
+ */
+function voiceId(voice: SpeechSynthesisVoice): string {
+  return `${voice.voiceURI}|${voice.name}|${voice.lang}`
+}
+
+/**
  * Every English voice on this device, best first.
  *
  * Locally installed voices lead: a remote voice needs the network, which is
- * exactly what this app promises not to require. Duplicate URIs are dropped —
- * some platforms list the same voice more than once.
+ * exactly what this app promises not to require.
  */
 export function listEnglishVoices(): VoiceOption[] {
   if (!isSpeechSupported()) return []
@@ -39,12 +50,13 @@ export function listEnglishVoices(): VoiceOption[] {
     .getVoices()
     .filter(isEnglish)
     .filter((voice) => {
-      if (seen.has(voice.voiceURI)) return false
-      seen.add(voice.voiceURI)
+      const id = voiceId(voice)
+      if (seen.has(id)) return false
+      seen.add(id)
       return true
     })
     .map((voice) => ({
-      uri: voice.voiceURI,
+      id: voiceId(voice),
       name: voice.name,
       lang: voice.lang,
       local: voice.localService,
@@ -59,20 +71,22 @@ export function listEnglishVoices(): VoiceOption[] {
  * The voice an utterance would use: the chosen one when it is still installed,
  * otherwise the best English voice available.
  */
-function resolveVoice(voiceURI?: string | null): SpeechSynthesisVoice | undefined {
+function resolveVoice(id?: string | null): SpeechSynthesisVoice | undefined {
   const english = window.speechSynthesis.getVoices().filter(isEnglish)
 
   return (
-    (voiceURI ? english.find((voice) => voice.voiceURI === voiceURI) : undefined) ??
+    (id ? english.find((voice) => voiceId(voice) === id) : undefined) ??
     english.find((voice) => voice.localService) ??
     english[0]
   )
 }
 
-/** URI of the voice that would speak right now, or null on a mute device. */
-export function resolveVoiceUri(voiceURI?: string | null): string | null {
+/** Id of the voice that would speak right now, or null on a mute device. */
+export function resolveVoiceId(id?: string | null): string | null {
   if (!isSpeechSupported()) return null
-  return resolveVoice(voiceURI)?.voiceURI ?? null
+
+  const voice = resolveVoice(id)
+  return voice ? voiceId(voice) : null
 }
 
 /**
@@ -91,7 +105,7 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   if (synth.speaking || synth.pending) synth.cancel()
 
   const utterance = new SpeechSynthesisUtterance(text)
-  const voice = resolveVoice(options.voiceURI)
+  const voice = resolveVoice(options.voiceId)
   if (voice) utterance.voice = voice
   utterance.lang = voice?.lang ?? FALLBACK_LANG
 

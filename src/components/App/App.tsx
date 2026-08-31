@@ -70,7 +70,7 @@ export function App() {
           <VoicePicker
             text={ui.voice}
             voices={speech.voices}
-            selected={speech.voiceURI}
+            selected={speech.voiceId}
             onSelect={speech.setVoice}
           />
         ) : null}

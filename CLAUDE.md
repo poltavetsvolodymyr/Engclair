@@ -96,6 +96,7 @@ earlier tests in the same file.
 ├── scripts/generate-icons.py      Redraws the icons below; no dependencies
 ├── public/
 │   ├── favicon.svg                The mark, and the source of its geometry
+│   ├── voices.html                Lists the device's voices  [TEMPORARY]
 │   ├── icon-192.png               Manifest icons  [generated]
 │   ├── icon-512.png                               [generated]
 │   ├── icon-maskable-512.png      Safe-zone variant for launchers [generated]
@@ -182,7 +183,10 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   terms is the user's call, saved under `localStorage['engclair:voice:v1']` —
   its own key, so resetting review progress cannot change how the app sounds.
   The picker only appears when the device has two or more English voices: one
-  is not a choice. `listEnglishVoices` sorts on one key, installed before
+  is not a choice. A voice is identified by more than its `voiceURI` — nothing
+  in the spec makes that unique, and a device can hand two entries the same
+  one. Keying on it alone dropped a voice from the list and, worse, made
+  picking one of them play the other. `listEnglishVoices` sorts on one key, installed before
   remote, and stably, so the device's own order survives inside each group and
   the first entry is exactly what plays when nothing has been chosen — list and
   default can never disagree. A saved voice that has since been deleted from
@@ -200,6 +204,11 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   the next visit, with no prompt to build or word it. That is safe here because
   a grade is persisted the moment it is given, so a reload never loses work. Add
   an update prompt only if that stops being true.
+- **`public/voices.html` is temporary.** It lists every voice
+  `speechSynthesis.getVoices()` reports on the device, English or not, with the
+  flags the picker reasons about. It exists to settle "why is my voice not in
+  the list" from the phone itself rather than by guesswork. Delete it once the
+  voice list is trusted.
 - **The icons are generated** by `scripts/generate-icons.py` from the same
   geometry as `public/favicon.svg` — a rounded square and an `E` of four bars.
   It is plain Python with no packages to install, so no image library enters the

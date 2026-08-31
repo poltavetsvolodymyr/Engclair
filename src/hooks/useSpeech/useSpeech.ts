@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   isSpeechSupported,
   listEnglishVoices,
-  loadVoiceUri,
+  loadVoiceId,
   onVoicesChanged,
-  resolveVoiceUri,
-  saveVoiceUri,
+  resolveVoiceId,
+  saveVoiceId,
   speak as speakText,
   stopSpeaking,
 } from '@/lib/speech'
@@ -22,7 +22,7 @@ import type { SpeechControl } from './types/speech-control'
 export function useSpeech(): SpeechControl {
   const [speaking, setSpeaking] = useState(false)
   const [voices, setVoices] = useState(listEnglishVoices)
-  const [chosen, setChosen] = useState(loadVoiceUri)
+  const [chosen, setChosen] = useState(loadVoiceId)
 
   // A property of the device, not of this render.
   const supported = useMemo(isSpeechSupported, [])
@@ -37,12 +37,12 @@ export function useSpeech(): SpeechControl {
   // What will really be heard: the chosen voice may have been deleted from the
   // device since it was picked, in which case this is the fallback.
   // `voices` is a dependency because the list arriving changes the answer.
-  const voiceURI = useMemo(() => resolveVoiceUri(chosen), [chosen, voices])
+  const voiceId = useMemo(() => resolveVoiceId(chosen), [chosen, voices])
 
   const speak = useCallback(
     (text: string) => {
       speakText(text, {
-        voiceURI: chosen,
+        voiceId: chosen,
         onStart: () => setSpeaking(true),
         onEnd: () => setSpeaking(false),
       })
@@ -50,10 +50,10 @@ export function useSpeech(): SpeechControl {
     [chosen],
   )
 
-  const setVoice = useCallback((uri: string) => {
-    setChosen(uri)
-    saveVoiceUri(uri)
+  const setVoice = useCallback((id: string) => {
+    setChosen(id)
+    saveVoiceId(id)
   }, [])
 
-  return { supported, speaking, speak, voices, voiceURI, setVoice }
+  return { supported, speaking, speak, voices, voiceId, setVoice }
 }

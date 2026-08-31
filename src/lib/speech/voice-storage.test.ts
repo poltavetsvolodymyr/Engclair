@@ -3,7 +3,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { loadVoiceUri, saveVoiceUri } from './voice-storage'
+import { loadVoiceId, saveVoiceId } from './voice-storage'
 
 const STORAGE_KEY = 'engclair:voice:v1'
 
@@ -15,21 +15,21 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('loadVoiceUri', () => {
+describe('loadVoiceId', () => {
   it('is null when nothing has been chosen', () => {
-    expect(loadVoiceUri()).toBeNull()
+    expect(loadVoiceId()).toBeNull()
   })
 
-  it('reads back what saveVoiceUri wrote', () => {
-    saveVoiceUri('uri:Samantha')
+  it('reads back what saveVoiceId wrote', () => {
+    saveVoiceId('uri:Samantha')
 
-    expect(loadVoiceUri()).toBe('uri:Samantha')
+    expect(loadVoiceId()).toBe('uri:Samantha')
   })
 
   it('treats an empty string as no choice', () => {
     localStorage.setItem(STORAGE_KEY, '')
 
-    expect(loadVoiceUri()).toBeNull()
+    expect(loadVoiceId()).toBeNull()
   })
 
   it('survives storage being unavailable', () => {
@@ -37,13 +37,13 @@ describe('loadVoiceUri', () => {
       throw new Error('SecurityError')
     })
 
-    expect(loadVoiceUri()).toBeNull()
+    expect(loadVoiceId()).toBeNull()
   })
 })
 
-describe('saveVoiceUri', () => {
+describe('saveVoiceId', () => {
   it('keeps its own key, so resetting progress does not change the voice', () => {
-    saveVoiceUri('uri:Samantha')
+    saveVoiceId('uri:Samantha')
 
     expect(localStorage.getItem(STORAGE_KEY)).toBe('uri:Samantha')
     expect(localStorage.getItem('engclair:progress:v1')).toBeNull()
@@ -54,6 +54,6 @@ describe('saveVoiceUri', () => {
       throw new Error('QuotaExceededError')
     })
 
-    expect(() => saveVoiceUri('uri:Samantha')).not.toThrow()
+    expect(() => saveVoiceId('uri:Samantha')).not.toThrow()
   })
 })
