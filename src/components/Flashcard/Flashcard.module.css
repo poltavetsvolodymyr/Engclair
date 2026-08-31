@@ -27,7 +27,19 @@
   gap: var(--space-xs);
 }
 
+/* The button sits at the end of the row, on the term's own line. */
+.termRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
 .term {
+  flex: 1;
+  /* A flex item will not wrap below its longest word without this, and a long
+     term would push the button off the card. */
+  min-width: 0;
+  overflow-wrap: break-word;
   margin: 0;
   font-size: var(--text-2xl);
   line-height: 1.15;

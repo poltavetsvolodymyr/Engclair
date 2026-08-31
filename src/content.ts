@@ -26,6 +26,7 @@ export const content: Content = {
       showAnswer: 'Show answer',
       definitionLabel: 'Definition',
       exampleLabel: 'Example',
+      speak: 'Hear pronunciation',
       categoryLabels: {
         'vocabulary': 'Vocabulary',
         'phrasal-verb': 'Phrasal verb',

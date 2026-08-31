@@ -118,6 +118,7 @@ earlier tests in the same file.
 │   ├── lib/                       Framework-free logic
 │   │   ├── sm2/                   The algorithm; pure, no React, no storage
 │   │   ├── storage/               localStorage load/save/clear of progress
+│   │   ├── speech/                Pronunciation via the browser's own voices
 │   │   ├── theme/                 Theme list + persistence  [TEMPORARY]
 │   │   └── review/                Grade -> SM-2 quality bridge
 │   ├── hooks/
@@ -125,12 +126,14 @@ earlier tests in the same file.
 │   │   │   ├── useReviewSession.ts
 │   │   │   ├── build-queue.ts     Hook-only helper
 │   │   │   └── types/review-session.ts
+│   │   ├── useSpeech/             Is speech available, is it talking now
 │   │   └── useTheme/              Accent theme state  [TEMPORARY]
 │   └── components/                One folder per component
 │       ├── App/                   Composition root; layout only
 │       ├── Header/
 │       ├── StatsBar/
 │       ├── Flashcard/
+│       ├── SpeakButton/           Icon button beside the term
 │       ├── RevealButton/
 │       ├── GradeButtons/
 │       ├── SessionMessage/
@@ -163,6 +166,17 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   to `localStorage['engclair:progress:v1']` after every grade. All access is
   try/caught, so private mode or a full quota just behaves like a fresh start.
   Bump the key suffix if the state shape ever changes.
+- **Pronunciation** (`lib/speech/`): the speaker button beside the term reads it
+  aloud through the browser's own `speechSynthesis`. No audio ships with the
+  deck and nothing is fetched, so the feature costs zero bytes and keeps
+  working offline. Two details matter and are easy to get wrong: the utterance
+  language is pinned to the chosen voice's own tag, because a phone set to
+  another language will otherwise read English with that language's phonetics;
+  and a locally installed voice is preferred over a remote one, since a remote
+  voice needs the network. `speechSynthesis.cancel()` is called only when
+  something is actually being spoken — cancelling an idle queue leaves iOS
+  silent for every later utterance. A device without the API simply gets no
+  button: `useSpeech` reports it and `App` then passes no `onSpeak`.
 - **Offline** (`vite-plugin-pwa`, configured in `vite.config.ts`): the app is
   installable and runs with no network at all. Nothing is fetched at runtime —
   the deck is bundled and progress is local — so precaching the shell is enough

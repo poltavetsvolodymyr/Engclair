@@ -8,6 +8,7 @@ import { StatsBar } from '@/components/StatsBar'
 import { ThemePicker } from '@/components/ThemePicker'
 import { content } from '@/content'
 import { useReviewSession } from '@/hooks/useReviewSession'
+import { useSpeech } from '@/hooks/useSpeech'
 import { useTheme } from '@/hooks/useTheme'
 
 import styles from './App.module.css'
@@ -17,7 +18,12 @@ const { ui, cards } = content
 /** Composition root: wires the review session to the presentational components. */
 export function App() {
   const session = useReviewSession(cards)
+  const speech = useSpeech()
   const { theme, setTheme } = useTheme()
+
+  // Bound to a local, so the callback below keeps the card TypeScript narrowed
+  // here rather than the mutable property it came from.
+  const card = session.currentCard
 
   return (
     <div className={styles.app}>
@@ -33,11 +39,13 @@ export function App() {
       </div>
 
       <main className={styles.main}>
-        {session.currentCard ? (
+        {card ? (
           <Flashcard
-            card={session.currentCard}
+            card={card}
             text={ui.card}
             revealed={session.revealed}
+            speaking={speech.speaking}
+            onSpeak={speech.supported ? () => speech.speak(card.term) : undefined}
           />
         ) : (
           <SessionMessage text={session.reviewedCount > 0 ? ui.done : ui.empty} />
@@ -46,7 +54,7 @@ export function App() {
 
       {/* Pinned chrome: the controls sit under the thumb, not below the page. */}
       <div className={styles.bottom}>
-        {session.currentCard ? (
+        {card ? (
           <div className={styles.actions}>
             {session.revealed ? (
               <GradeButtons text={ui.grades} onGrade={session.grade} />
