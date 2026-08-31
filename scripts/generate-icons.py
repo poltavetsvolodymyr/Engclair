@@ -1,144 +1,99 @@
 #!/usr/bin/env python3
-"""Render the Engclair app icons from the same geometry as public/favicon.svg.
+"""Render the app icons from public/favicon.svg.
 
-Run after changing the mark:
-
+    pip install cairosvg
     python3 scripts/generate-icons.py
 
-Deliberately dependency-free — the mark is a rounded square plus an "E" built
-from four axis-aligned bars, so it needs no SVG rasteriser. Coverage of the
-bars is computed analytically and only the rounded corners are supersampled,
-which keeps the edges clean without pulling an image library into the build.
+The SVG is the only source of the mark; everything in public/*.png is derived
+from it and committed as a source asset. Three shapes come out of one drawing:
+
+  * the plain icons keep the SVG's rounded plate, transparent outside it;
+  * the maskable one drops the plate for a full-bleed background and shrinks
+    the drawing into the safe circle, because launchers crop it to whatever
+    shape they like;
+  * the Apple touch icon is full bleed and square — iOS rounds it itself and
+    ignores transparency.
 """
 
-import struct
-import zlib
+import re
+import sys
 from pathlib import Path
 
-# The mark, in the 64-unit space of public/favicon.svg. Keep the two in sync.
-CANVAS = 64
-CORNER_RADIUS = 14
-BG = (0x3F, 0x62, 0x12)  # --color-accent for the forest theme, as favicon.svg
-FG = (0xFA, 0xF6, 0xEF)  # --color-bg, the cream the app is painted on
+try:
+    import cairosvg
+except ImportError:  # pragma: no cover - a plain missing-dependency message
+    sys.exit('Missing cairosvg. Run: pip install cairosvg')
 
-# "M22 15.5h20v7H29v6h11v7H29v6h13v7H22z" — a stem and three arms.
-# Arms are 7 deep with 6 between them, so the E stands 33 tall and starts at
-# 15.5 to sit dead centre of the 64-unit canvas.
-BARS = (
-    (22, 15.5, 29, 48.5),  # stem
-    (29, 15.5, 42, 22.5),  # top arm
-    (29, 28.5, 40, 35.5),  # middle arm
-    (29, 41.5, 42, 48.5),  # bottom arm
-)
+ROOT = Path(__file__).resolve().parent.parent
+SOURCE = ROOT / 'public' / 'favicon.svg'
+PUBLIC = ROOT / 'public'
 
-SUBSAMPLES = 4  # per axis, inside the corner squares only
-
-PUBLIC = Path(__file__).resolve().parent.parent / 'public'
+CANVAS = 512
+# The colour behind a full-bleed icon: the darker end of the plate's gradient,
+# so the flat variants sit in the same family as the gradient one.
+BACKDROP = '#3f6212'
+# A maskable icon may be cropped to a circle of 80% of the canvas. Two thirds
+# leaves the drawing clear of the crop on every launcher.
+SAFE_SCALE = 2 / 3
 
 
-def overlap(lo_a, hi_a, lo_b, hi_b):
-    """Length shared by two 1-D spans."""
-    return max(0.0, min(hi_a, hi_b) - max(lo_a, lo_b))
+def parts() -> tuple[str, str]:
+    """The <defs> block and the drawing, pulled out of the source SVG."""
+    # Comments go first: the file's own header names both markers, and a
+    # search that sees them matches inside the prose instead of the drawing.
+    svg = re.sub(r'<!--.*?-->', '', SOURCE.read_text(encoding='utf-8'), flags=re.DOTALL)
+
+    defs = re.search(r'<defs>.*?</defs>', svg, re.DOTALL)
+    mark = re.search(r'<g id="mark">.*</g>', svg, re.DOTALL)
+    if not defs or not mark:
+        sys.exit(
+            f'{SOURCE.name} no longer has both <defs> and <g id="mark">. '
+            'Restore them, or teach this script the new shape.'
+        )
+    return defs.group(0), mark.group(0)
 
 
-def bar_coverage(x, y, bars):
-    """How much of pixel (x, y) the bars cover. They never overlap."""
-    total = 0.0
-    for x0, y0, x1, y1 in bars:
-        total += overlap(x, x + 1, x0, x1) * overlap(y, y + 1, y0, y1)
-    return min(1.0, total)
-
-
-def rounded_coverage(x, y, size, radius):
-    """How much of pixel (x, y) a rounded square of `size` covers."""
-    if radius <= 0:
-        return 1.0
-
-    # Corner squares are the only place the shape is not the full pixel.
-    cx = x if x < radius else (size - 1 - x if x >= size - radius else None)
-    cy = y if y < radius else (size - 1 - y if y >= size - radius else None)
-    if cx is None or cy is None:
-        return 1.0
-
-    # Centre of the corner arc, in the pixel's own quadrant.
-    ox = radius if x < radius else size - radius
-    oy = radius if y < radius else size - radius
-
-    step = 1.0 / SUBSAMPLES
-    inside = 0
-    for sy in range(SUBSAMPLES):
-        py = y + (sy + 0.5) * step
-        for sx in range(SUBSAMPLES):
-            px = x + (sx + 0.5) * step
-            dx = px - ox
-            dy = py - oy
-            # Only the outward quadrant of the corner is cut away.
-            if (dx < 0) == (x < radius) and (dy < 0) == (y < radius):
-                if dx * dx + dy * dy > radius * radius:
-                    continue
-            inside += 1
-    return inside / (SUBSAMPLES * SUBSAMPLES)
-
-
-def render(size, corner_radius, content_scale):
-    """Composite the mark over its background into RGBA rows."""
-    unit = size / CANVAS
-    radius = corner_radius * unit
-
-    # Scale the 64-unit bars about the centre, then into pixels.
-    def place(v):
-        return ((v - CANVAS / 2) * content_scale + CANVAS / 2) * unit
-
-    bars = [(place(x0), place(y0), place(x1), place(y1)) for x0, y0, x1, y1 in BARS]
-
-    rows = []
-    for y in range(size):
-        row = bytearray()
-        for x in range(size):
-            back = rounded_coverage(x, y, size, radius)
-            fore = bar_coverage(x, y, bars)
-            alpha = fore + back * (1 - fore)
-            if alpha <= 0:
-                row += b'\0\0\0\0'
-                continue
-            for channel in range(3):
-                mixed = FG[channel] * fore + BG[channel] * back * (1 - fore)
-                row.append(round(mixed / alpha))
-            row.append(round(alpha * 255))
-        rows.append(bytes(row))
-    return rows
-
-
-def write_png(path, size, rows):
-    raw = b''.join(b'\0' + row for row in rows)
-
-    def chunk(tag, payload):
-        body = tag + payload
-        return struct.pack('>I', len(payload)) + body + struct.pack('>I', zlib.crc32(body))
-
-    png = b'\x89PNG\r\n\x1a\n'
-    png += chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0))
-    png += chunk(b'IDAT', zlib.compress(raw, 9))
-    png += chunk(b'IEND', b'')
-    path.write_bytes(png)
-    print(f'{path.name}: {size}x{size}, {len(png)} bytes')
+def compose(defs: str, mark: str, *, full_bleed: bool, scale: float) -> str:
+    """One icon variant, as an SVG document."""
+    offset = CANVAS * (1 - scale) / 2
+    plate = (
+        f'<rect width="{CANVAS}" height="{CANVAS}" fill="{BACKDROP}"/>'
+        if full_bleed
+        else f'<rect width="{CANVAS}" height="{CANVAS}" rx="112" fill="url(#bg)"/>'
+    )
+    drawing = (
+        mark
+        if scale == 1
+        else f'<g transform="translate({offset} {offset}) scale({scale})">{mark}</g>'
+    )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CANVAS} {CANVAS}">'
+        f'{defs}{plate}{drawing}</svg>'
+    )
 
 
 ICONS = (
-    # name,                    size, corner radius, content scale
-    ('icon-192.png', 192, CORNER_RADIUS, 1.0),
-    ('icon-512.png', 512, CORNER_RADIUS, 1.0),
-    # Maskable icons get cropped to whatever shape the launcher likes, so the
-    # background runs full bleed and the mark shrinks into the safe zone.
-    ('icon-maskable-512.png', 512, 0, 0.6),
-    # iOS applies its own rounding and ignores transparency, so: full bleed.
-    ('apple-touch-icon.png', 180, 0, 1.0),
+    # name,                    size, full bleed, scale
+    ('icon-192.png', 192, False, 1.0),
+    ('icon-512.png', 512, False, 1.0),
+    ('icon-maskable-512.png', 512, True, SAFE_SCALE),
+    ('apple-touch-icon.png', 180, True, 1.0),
 )
 
 
-def main():
-    for name, size, corner_radius, content_scale in ICONS:
-        write_png(PUBLIC / name, size, render(size, corner_radius, content_scale))
+def main() -> None:
+    defs, mark = parts()
+
+    for name, size, full_bleed, scale in ICONS:
+        svg = compose(defs, mark, full_bleed=full_bleed, scale=scale)
+        target = PUBLIC / name
+        cairosvg.svg2png(
+            bytestring=svg.encode('utf-8'),
+            write_to=str(target),
+            output_width=size,
+            output_height=size,
+        )
+        print(f'{name}: {size}x{size}, {target.stat().st_size // 1024} KB')
 
 
 if __name__ == '__main__':

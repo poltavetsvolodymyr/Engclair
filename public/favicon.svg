@@ -1,4 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#3f6212" />
-  <path d="M22 15.5h20v7H29v6h11v7H29v6h13v7H22z" fill="#faf6ef" />
+<!--
+  The Engclair mark: a chocolate eclair with Big Ben rising behind it.
+
+  Structured for scripts/generate-icons.py, which pulls the two parts apart:
+  #plate is the rounded background, dropped for the full-bleed icon variants,
+  and #mark is the drawing, scaled into the safe zone for maskable launchers.
+  Keep both ids, and keep <defs> at the top.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f7a18"/>
+      <stop offset="1" stop-color="#34500e"/>
+    </linearGradient>
+    <linearGradient id="pastry" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbecc9"/>
+      <stop offset="1" stop-color="#e8c988"/>
+    </linearGradient>
+    <linearGradient id="glaze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8f4d24"/>
+      <stop offset="1" stop-color="#552810"/>
+    </linearGradient>
+    <clipPath id="body">
+      <rect x="58" y="292" width="396" height="130" rx="65"/>
+    </clipPath>
+  </defs>
+
+  <rect id="plate" width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <g id="mark">
+    <!-- Big Ben, rising behind the eclair -->
+    <g fill="#f7e5bd">
+      <path d="M356 84 402 170H310z"/>
+      <rect x="304" y="170" width="104" height="26" rx="8"/>
+      <rect x="318" y="196" width="76" height="140"/>
+      <rect x="300" y="306" width="112" height="30" rx="8"/>
+    </g>
+    <circle cx="356" cy="246" r="31" fill="#fefaf0"/>
+    <circle cx="356" cy="246" r="31" fill="none" stroke="#34500e" stroke-width="8"/>
+    <path d="M356 228v18h13" fill="none" stroke="#34500e" stroke-width="8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- The eclair: pastry, glaze with a poured edge, and one gloss streak -->
+    <g clip-path="url(#body)">
+      <rect x="58" y="292" width="396" height="130" fill="url(#pastry)"/>
+      <path d="M58 276H454V362Q405 386 356 362T258 362T160 362T58 362Z" fill="url(#glaze)"/>
+      <path d="M126 316h150" fill="none" stroke="#ffffff" stroke-opacity="0.28"
+            stroke-width="16" stroke-linecap="round"/>
+    </g>
+
+    <!-- Cream swirl at the near end -->
+    <circle cx="122" cy="357" r="45" fill="#fbecc9"/>
+    <path d="M122 331a26 26 0 1 1-25 33" fill="none" stroke="#6b3718"
+          stroke-width="13" stroke-linecap="round"/>
+  </g>
 </svg>

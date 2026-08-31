@@ -94,10 +94,10 @@ earlier tests in the same file.
 ├── vite.config.ts                 base '/Engclair/' + '@' alias + PWA manifest
 ├── tsconfig*.json                 Project-references TS setup (app + node)
 ├── scripts/
-│   ├── generate-icons.py          Redraws the icons below; no dependencies
+│   ├── generate-icons.py          Renders the icons below from favicon.svg
 │   └── generate-audio.py          Records the deck with a neural voice
 ├── public/
-│   ├── favicon.svg                The mark, and the source of its geometry
+│   ├── favicon.svg                The mark; the only source of the icons
 │   ├── voices.html                Lists the device's voices  [TEMPORARY]
 │   ├── audio/                     One recording per card  [generated]
 │   ├── icon-192.png               Manifest icons  [generated]
@@ -242,12 +242,17 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   flags the picker reasons about. It exists to settle "why is my voice not in
   the list" from the phone itself rather than by guesswork. Delete it once the
   voice list is trusted.
-- **The icons are generated** by `scripts/generate-icons.py` from the same
-  geometry as `public/favicon.svg` — a rounded square and an `E` of four bars.
-  It is plain Python with no packages to install, so no image library enters the
-  build. Change the mark in `favicon.svg`, mirror the numbers at the top of the
-  script, re-run it, and commit the PNGs: they are source assets, not build
-  output, and `dist/` stays the only thing that is never committed.
+- **The icons are generated** from `public/favicon.svg` — an eclair under
+  chocolate with Big Ben rising behind it — by `scripts/generate-icons.py`
+  (`pip install cairosvg`). The SVG is the single source: edit it, re-run the
+  script, and commit the PNGs. They are source assets, not build output, and
+  `dist/` stays the only thing that is never committed.
+  The script pulls the drawing apart at two ids, so keep them: `#plate` is the
+  rounded background, dropped for the full-bleed variants, and `#mark` is the
+  drawing, shrunk into the safe circle for maskable launchers, which crop an
+  icon to whatever shape they please. It strips XML comments before looking for
+  those ids — the file's own header names them, and a search that sees the
+  prose matches the comment instead of the drawing.
 
 ## Commands
 
