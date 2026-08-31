@@ -95,10 +95,11 @@ earlier tests in the same file.
 ├── tsconfig*.json                 Project-references TS setup (app + node)
 ├── scripts/
 │   ├── generate-icons.py          Redraws the icons below; no dependencies
-│   └── generate-audio.mjs         Records the deck with a macOS voice
+│   └── generate-audio.py          Records the deck with a neural voice
 ├── public/
 │   ├── favicon.svg                The mark, and the source of its geometry
 │   ├── voices.html                Lists the device's voices  [TEMPORARY]
+│   ├── audio/                     One recording per card  [generated]
 │   ├── icon-192.png               Manifest icons  [generated]
 │   ├── icon-512.png                               [generated]
 │   ├── icon-maskable-512.png      Safe-zone variant for launchers [generated]
@@ -180,12 +181,20 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   clip settles exactly once; counting both made the app speak the word twice.
   Clips are precached with the shell (`globPatterns` in `vite.config.ts`) or
   offline would quietly lose them.
-- **Recording clips** (`scripts/generate-audio.mjs`, macOS only): `say` is given
-  the Enhanced and Premium voices downloaded in System Settings, while Safari
-  on iOS is given none of them — so the good voice a phone will not hand the
-  web gets baked into the deck from a Mac instead. The script records every
-  term, converts with `afconvert`, and adds `audio:` to each card. Both the
-  files and the edit are source, to be reviewed and committed.
+- **Recording clips** (`scripts/generate-audio.py`): `pip install piper-tts
+  imageio-ffmpeg`, then run it. Piper is a neural synthesiser that runs
+  offline; the American voice it uses is `en-us-ryan-high`, downloaded once
+  into the git-ignored `.cache/` from a piper GitHub release (the same models
+  are on Hugging Face, which some networks block). ffmpeg arrives as a binary
+  inside the pip package, so nothing has to be installed system-wide. The
+  script records every term, encodes, and adds `audio:` to each card — the
+  files and the edit are both source, to be reviewed and committed.
+  **MP3, not AAC**: open-source Chromium builds ship no AAC decoder, and a clip
+  that will not decode falls back to the very voice the recording exists to
+  replace. The whole deck costs about 120 KB.
+  `src/content.test.ts` checks that every card claiming a recording has one on
+  disk and that its name matches the card id, so the deck and the folder cannot
+  drift apart.
 - **Speech synthesis** (`lib/speech/`): the speaker button beside the term reads
   the word aloud through the browser's own `speechSynthesis`. No audio ships with the
   deck and nothing is fetched, so the feature costs zero bytes and keeps

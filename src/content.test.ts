@@ -1,3 +1,9 @@
+/// <reference types="node" />
+// Referenced here rather than in tsconfig.app.json's `types`: this one suite
+// reads the filesystem, and the app itself must stay unable to.
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+
 import { describe, expect, it } from 'vitest'
 
 import { content } from './content'
@@ -115,5 +121,25 @@ describe('English-only rule', () => {
     )
 
     expect(offenders).toEqual([])
+  })
+})
+
+describe('recorded pronunciation', () => {
+  it('every card that claims a recording has one on disk', () => {
+    const missing = content.cards
+      .filter((card) => card.audio)
+      .filter((card) => !existsSync(join('public', 'audio', card.audio as string)))
+      .map((card) => card.id)
+
+    expect(missing).toEqual([])
+  })
+
+  it('names each recording after the card, so the two cannot drift apart', () => {
+    const mismatched = content.cards
+      .filter((card) => card.audio)
+      .filter((card) => card.audio !== `${card.id}.mp3`)
+      .map((card) => card.id)
+
+    expect(mismatched).toEqual([])
   })
 })
