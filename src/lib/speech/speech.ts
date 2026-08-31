@@ -24,6 +24,33 @@ function isEnglish(voice: SpeechSynthesisVoice): boolean {
 }
 
 /**
+ * Apple's novelty and legacy synthesiser voices — Bells, Boing, Zarvox,
+ * Trinoids, Albert and friends.
+ *
+ * The API presents them as ordinary voices, and on an iPhone there are
+ * nineteen of them against six real ones, so unfiltered they bury the list.
+ * None pronounces English in a way worth learning from. The prefix is Apple's
+ * own, so this matches nothing on other platforms — which is correct: they
+ * have no equivalent.
+ */
+function isNovelty(voice: SpeechSynthesisVoice): boolean {
+  return voice.voiceURI.startsWith('com.apple.speech.synthesis.voice.')
+}
+
+/**
+ * The English voices worth offering, from the same source for both the list
+ * and the fallback — the two must never disagree about what exists.
+ */
+function usableEnglishVoices(): SpeechSynthesisVoice[] {
+  const english = window.speechSynthesis.getVoices().filter(isEnglish)
+  const real = english.filter((voice) => !isNovelty(voice))
+
+  // Never trade a working voice for silence: a device with nothing but
+  // novelty voices still gets to speak.
+  return real.length > 0 ? real : english
+}
+
+/**
  * A stable identity for a voice.
  *
  * `voiceURI` alone is not enough: nothing in the spec makes it unique, and a
@@ -46,9 +73,7 @@ export function listEnglishVoices(): VoiceOption[] {
 
   const seen = new Set<string>()
 
-  return window.speechSynthesis
-    .getVoices()
-    .filter(isEnglish)
+  return usableEnglishVoices()
     .filter((voice) => {
       const id = voiceId(voice)
       if (seen.has(id)) return false
@@ -72,7 +97,7 @@ export function listEnglishVoices(): VoiceOption[] {
  * otherwise the best English voice available.
  */
 function resolveVoice(id?: string | null): SpeechSynthesisVoice | undefined {
-  const english = window.speechSynthesis.getVoices().filter(isEnglish)
+  const english = usableEnglishVoices()
 
   return (
     (id ? english.find((voice) => voiceId(voice) === id) : undefined) ??

@@ -313,3 +313,89 @@ describe('onVoicesChanged', () => {
     expect(() => onVoicesChanged(vi.fn())()).not.toThrow()
   })
 })
+
+/**
+ * The English voices a real iPhone reports, in the order it reports them.
+ * Nineteen of the twenty-five are novelty voices; only six can pronounce.
+ */
+const IPHONE_VOICES: SpeechSynthesisVoice[] = (
+  [
+    ['Samantha', 'en-US', 'com.apple.voice.super-compact.en-US.Samantha'],
+    ['Albert', 'en-US', 'com.apple.speech.synthesis.voice.Albert'],
+    ['Bad News', 'en-US', 'com.apple.speech.synthesis.voice.BadNews'],
+    ['Bahh', 'en-US', 'com.apple.speech.synthesis.voice.Bahh'],
+    ['Bells', 'en-US', 'com.apple.speech.synthesis.voice.Bells'],
+    ['Boing', 'en-US', 'com.apple.speech.synthesis.voice.Boing'],
+    ['Bubbles', 'en-US', 'com.apple.speech.synthesis.voice.Bubbles'],
+    ['Cellos', 'en-US', 'com.apple.speech.synthesis.voice.Cellos'],
+    ['Wobble', 'en-US', 'com.apple.speech.synthesis.voice.Deranged'],
+    ['Fred', 'en-US', 'com.apple.speech.synthesis.voice.Fred'],
+    ['Good News', 'en-US', 'com.apple.speech.synthesis.voice.GoodNews'],
+    ['Jester', 'en-US', 'com.apple.speech.synthesis.voice.Hysterical'],
+    ['Junior', 'en-US', 'com.apple.speech.synthesis.voice.Junior'],
+    ['Kathy', 'en-US', 'com.apple.speech.synthesis.voice.Kathy'],
+    ['Organ', 'en-US', 'com.apple.speech.synthesis.voice.Organ'],
+    ['Superstar', 'en-US', 'com.apple.speech.synthesis.voice.Princess'],
+    ['Ralph', 'en-US', 'com.apple.speech.synthesis.voice.Ralph'],
+    ['Trinoids', 'en-US', 'com.apple.speech.synthesis.voice.Trinoids'],
+    ['Whisper', 'en-US', 'com.apple.speech.synthesis.voice.Whisper'],
+    ['Zarvox', 'en-US', 'com.apple.speech.synthesis.voice.Zarvox'],
+    ['Daniel', 'en-GB', 'com.apple.voice.super-compact.en-GB.Daniel'],
+    ['Karen', 'en-AU', 'com.apple.voice.super-compact.en-AU.Karen'],
+    ['Moira', 'en-IE', 'com.apple.voice.super-compact.en-IE.Moira'],
+    ['Rishi', 'en-IN', 'com.apple.voice.super-compact.en-IN.Rishi'],
+    ['Tessa', 'en-ZA', 'com.apple.voice.super-compact.en-ZA.Tessa'],
+    ['Alice', 'it-IT', 'com.apple.voice.super-compact.it-IT.Alice'],
+    ['Alva', 'sv-SE', 'com.apple.voice.super-compact.sv-SE.Alva'],
+  ] as const
+).map(([name, lang, voiceURI]) => ({
+  name,
+  lang,
+  voiceURI,
+  localService: true,
+  // Every voice on iOS reports itself as the default, which is why nothing
+  // here reasons about that flag.
+  default: true,
+}))
+
+describe('a real iPhone', () => {
+  it('offers only the voices that can actually pronounce English', () => {
+    installSpeech(IPHONE_VOICES)
+
+    expect(listEnglishVoices().map((v) => `${v.name} ${v.lang}`)).toEqual([
+      'Samantha en-US',
+      'Daniel en-GB',
+      'Karen en-AU',
+      'Moira en-IE',
+      'Rishi en-IN',
+      'Tessa en-ZA',
+    ])
+  })
+
+  it('never lets a novelty voice become the default', () => {
+    installSpeech(IPHONE_VOICES)
+
+    expect(resolveVoiceId(null)).toContain('Samantha')
+  })
+
+  it('refuses to speak as Zarvox even when asked by id', () => {
+    const { spoken } = installSpeech(IPHONE_VOICES)
+
+    speak('ubiquitous', {
+      voiceId: 'com.apple.speech.synthesis.voice.Zarvox|Zarvox|en-US',
+    })
+
+    expect(spoken[0].voice?.name).toBe('Samantha')
+  })
+
+  it('still speaks on a device that has nothing but novelty voices', () => {
+    const noveltyOnly = IPHONE_VOICES.filter((v) =>
+      v.voiceURI.startsWith('com.apple.speech.synthesis.voice.'),
+    )
+    const { spoken } = installSpeech(noveltyOnly)
+
+    expect(listEnglishVoices()).toHaveLength(noveltyOnly.length)
+    speak('ubiquitous')
+    expect(spoken[0].voice?.name).toBe('Albert')
+  })
+})

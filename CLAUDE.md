@@ -183,7 +183,13 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   terms is the user's call, saved under `localStorage['engclair:voice:v1']` —
   its own key, so resetting review progress cannot change how the app sounds.
   The picker only appears when the device has two or more English voices: one
-  is not a choice. A voice is identified by more than its `voiceURI` — nothing
+  is not a choice. Apple's novelty and legacy voices are filtered out by their
+  `com.apple.speech.synthesis.voice.` prefix — an iPhone reports nineteen of
+  them (Bells, Boing, Zarvox, Trinoids…) against six real ones, and unfiltered
+  they bury the list. What survives is one voice per accent: Samantha en-US,
+  Daniel en-GB, Karen en-AU, Moira en-IE, Rishi en-IN, Tessa en-ZA. Enhanced
+  and Premium voices downloaded in iOS Settings never reach the web at all, so
+  that list is the whole of what an iPhone can offer. A voice is identified by more than its `voiceURI` — nothing
   in the spec makes that unique, and a device can hand two entries the same
   one. Keying on it alone dropped a voice from the list and, worse, made
   picking one of them play the other. `listEnglishVoices` sorts on one key, installed before
