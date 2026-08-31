@@ -9,8 +9,14 @@
     <meta name="description" content="Learn English vocabulary and phrasal verbs with spaced repetition." />
     <!-- Installed to the home screen, it runs without browser chrome. The rest
          of the install metadata is the web app manifest, generated from
-         vite.config.ts. -->
+         vite.config.ts.
+
+         Both capability tags are needed: the manifest's `display` covers
+         current browsers, but iOS before 17.4 reads only the apple-prefixed
+         one and otherwise opens the shortcut in Safari. -->
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Engclair" />
     <title>Engclair</title>
   </head>
