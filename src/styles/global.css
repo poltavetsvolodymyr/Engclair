@@ -17,6 +17,11 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* On the home screen this is an app, not a page. Refuse the rubber-band
+     overscroll that drags the whole screen and springs it back when there is
+     nothing to scroll — that bounce is the single loudest tell that a web view
+     is underneath. Content taller than the viewport still scrolls normally. */
+  overscroll-behavior: none;
 }
 
 body {
@@ -36,4 +41,9 @@ button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* A held button should feel pressed, not selected: no text selection and no
+     iOS callout menu. Card text stays selectable — that is worth copying. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
