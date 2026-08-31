@@ -8,6 +8,32 @@
   border-radius: var(--radius-lg);
   /* Lifted off the page rather than outlined on it. */
   box-shadow: var(--shadow-md);
+  /* The card keeps its own shape whatever it holds: a long answer scrolls
+     inside it rather than the panel being sliced off by the frame. */
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The word, its phonetics and the speaker button never scroll away — reading
+   the definition should not cost you sight of what is being defined. */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Reaching the end of the answer must not drag the card area behind it. */
+  overscroll-behavior: contain;
+  /* More below is shown by the text dissolving, not by a cut. The mask covers
+     only this box, which has no background of its own, so a short answer that
+     leaves the lower edge empty fades nothing and looks untouched. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
 }
 
 .category {

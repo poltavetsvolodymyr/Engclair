@@ -12,5 +12,4 @@ export type {
   StatsText,
   ThemePickerText,
   UiText,
-  VoicePickerText,
 } from './ui'

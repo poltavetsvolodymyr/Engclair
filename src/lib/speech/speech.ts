@@ -1,11 +1,11 @@
-import type { SpeakOptions, VoiceOption } from './types/speak-options'
+import type { SpeakOptions } from './types/speak-options'
 
 /**
  * Pronunciation through the browser's own speech synthesis.
  *
- * No audio ships with the deck and nothing is fetched: the device speaks with
- * the voices it already has, which keeps the app the same size and keeps it
- * working offline.
+ * The fallback, not the main event: a card with a recording plays that
+ * instead. This is what speaks a card that has none, and it costs nothing —
+ * no audio ships for it and nothing is fetched, so it works offline too.
  */
 
 /** Fallback tag when the device exposes no English voice we can name. */
@@ -28,90 +28,29 @@ function isEnglish(voice: SpeechSynthesisVoice): boolean {
  * Trinoids, Albert and friends.
  *
  * The API presents them as ordinary voices, and on an iPhone there are
- * nineteen of them against six real ones, so unfiltered they bury the list.
- * None pronounces English in a way worth learning from. The prefix is Apple's
- * own, so this matches nothing on other platforms — which is correct: they
- * have no equivalent.
+ * nineteen of them against six real ones. None pronounces English in a way
+ * worth learning from, so none may be picked. The prefix is Apple's own, so
+ * this matches nothing on other platforms — which is correct: they have no
+ * equivalent.
  */
 function isNovelty(voice: SpeechSynthesisVoice): boolean {
   return voice.voiceURI.startsWith('com.apple.speech.synthesis.voice.')
 }
 
 /**
- * The English voices worth offering, from the same source for both the list
- * and the fallback — the two must never disagree about what exists.
- */
-function usableEnglishVoices(): SpeechSynthesisVoice[] {
-  const english = window.speechSynthesis.getVoices().filter(isEnglish)
-  const real = english.filter((voice) => !isNovelty(voice))
-
-  // Never trade a working voice for silence: a device with nothing but
-  // novelty voices still gets to speak.
-  return real.length > 0 ? real : english
-}
-
-/**
- * A stable identity for a voice.
+ * The best English voice on this device, or undefined if it has none.
  *
- * `voiceURI` alone is not enough: nothing in the spec makes it unique, and a
- * device may well hand two entries the same one. Keying on it alone would drop
- * a real voice from the list, and — worse — would make picking one of them
- * play the other.
- */
-function voiceId(voice: SpeechSynthesisVoice): string {
-  return `${voice.voiceURI}|${voice.name}|${voice.lang}`
-}
-
-/**
- * Every English voice on this device, best first.
- *
- * Locally installed voices lead: a remote voice needs the network, which is
+ * Locally installed voices win: a remote voice needs the network, which is
  * exactly what this app promises not to require.
  */
-export function listEnglishVoices(): VoiceOption[] {
-  if (!isSpeechSupported()) return []
+function pickVoice(): SpeechSynthesisVoice | undefined {
+  const english = window.speechSynthesis.getVoices().filter(isEnglish)
+  // Never trade a working voice for silence: a device with nothing but
+  // novelty voices still gets to speak.
+  const real = english.filter((voice) => !isNovelty(voice))
+  const usable = real.length > 0 ? real : english
 
-  const seen = new Set<string>()
-
-  return usableEnglishVoices()
-    .filter((voice) => {
-      const id = voiceId(voice)
-      if (seen.has(id)) return false
-      seen.add(id)
-      return true
-    })
-    .map((voice) => ({
-      id: voiceId(voice),
-      name: voice.name,
-      lang: voice.lang,
-      local: voice.localService,
-    }))
-    // Sorted on one key, and stably: within each group the device's own order
-    // survives, so the first entry is exactly the voice the fallback below
-    // would reach for. The list and the default can never disagree.
-    .sort((a, b) => Number(b.local) - Number(a.local))
-}
-
-/**
- * The voice an utterance would use: the chosen one when it is still installed,
- * otherwise the best English voice available.
- */
-function resolveVoice(id?: string | null): SpeechSynthesisVoice | undefined {
-  const english = usableEnglishVoices()
-
-  return (
-    (id ? english.find((voice) => voiceId(voice) === id) : undefined) ??
-    english.find((voice) => voice.localService) ??
-    english[0]
-  )
-}
-
-/** Id of the voice that would speak right now, or null on a mute device. */
-export function resolveVoiceId(id?: string | null): string | null {
-  if (!isSpeechSupported()) return null
-
-  const voice = resolveVoice(id)
-  return voice ? voiceId(voice) : null
+  return usable.find((voice) => voice.localService) ?? usable[0]
 }
 
 /**
@@ -130,7 +69,7 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   if (synth.speaking || synth.pending) synth.cancel()
 
   const utterance = new SpeechSynthesisUtterance(text)
-  const voice = resolveVoice(options.voiceId)
+  const voice = pickVoice()
   if (voice) utterance.voice = voice
   utterance.lang = voice?.lang ?? FALLBACK_LANG
 
@@ -147,18 +86,4 @@ export function stopSpeaking(): void {
 
   const synth = window.speechSynthesis
   if (synth.speaking || synth.pending) synth.cancel()
-}
-
-/**
- * Run `listener` whenever the voice list changes, and return an unsubscribe.
- *
- * The list is populated asynchronously: ask for it too early — which a first
- * render always does — and it comes back empty.
- */
-export function onVoicesChanged(listener: () => void): () => void {
-  if (!isSpeechSupported()) return () => {}
-
-  const synth = window.speechSynthesis
-  synth.addEventListener('voiceschanged', listener)
-  return () => synth.removeEventListener('voiceschanged', listener)
 }

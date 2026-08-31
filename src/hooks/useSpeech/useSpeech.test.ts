@@ -6,8 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useSpeech } from './useSpeech'
 
-const VOICE_KEY = 'engclair:voice:v1'
-
 class FakeUtterance {
   text: string
   lang = ''
@@ -19,15 +17,6 @@ class FakeUtterance {
   constructor(text: string) {
     this.text = text
   }
-}
-
-function voice(name: string, lang: string, localService: boolean): SpeechSynthesisVoice {
-  return { name, lang, localService, voiceURI: `uri:${name}`, default: false }
-}
-
-/** How lib/speech identifies the voice `voice()` above would build. */
-function idOf(name: string, lang: string): string {
-  return `uri:${name}|${name}|${lang}`
 }
 
 /** A stand-in for the speech API, including the EventTarget half of it. */
@@ -146,62 +135,6 @@ describe('useSpeech', () => {
     unmount()
 
     expect(synth.cancel).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('useSpeech voices', () => {
-  it('picks the list up when the browser fills it in late', () => {
-    const { arrive } = installSpeech([])
-    const { result } = renderHook(() => useSpeech())
-    expect(result.current.voices).toHaveLength(0)
-
-    act(() => arrive([voice('Samantha', 'en-US', true)]))
-
-    expect(result.current.voices).toHaveLength(1)
-  })
-
-  it('falls back to the best voice when none was ever chosen', () => {
-    installSpeech([voice('Daniel', 'en-GB', false), voice('Samantha', 'en-US', true)])
-
-    const { result } = renderHook(() => useSpeech())
-
-    expect(result.current.voiceId).toBe(idOf('Samantha', 'en-US'))
-  })
-
-  it('remembers a chosen voice across mounts', () => {
-    installSpeech([voice('Daniel', 'en-GB', false), voice('Samantha', 'en-US', true)])
-
-    const first = renderHook(() => useSpeech())
-    act(() => first.result.current.setVoice(idOf('Daniel', 'en-GB')))
-    expect(first.result.current.voiceId).toBe(idOf('Daniel', 'en-GB'))
-    first.unmount()
-
-    expect(localStorage.getItem(VOICE_KEY)).toBe(idOf('Daniel', 'en-GB'))
-    const second = renderHook(() => useSpeech())
-    expect(second.result.current.voiceId).toBe(idOf('Daniel', 'en-GB'))
-  })
-
-  it('speaks with the chosen voice', () => {
-    const { spoken } = installSpeech([
-      voice('Daniel', 'en-GB', false),
-      voice('Samantha', 'en-US', true),
-    ])
-    const { result } = renderHook(() => useSpeech())
-
-    act(() => result.current.setVoice(idOf('Daniel', 'en-GB')))
-    act(() => result.current.speak('ubiquitous'))
-
-    expect(spoken[0].voice?.name).toBe('Daniel')
-    expect(spoken[0].lang).toBe('en-GB')
-  })
-
-  it('falls back when the chosen voice has since been deleted', () => {
-    localStorage.setItem(VOICE_KEY, 'uri:Gone')
-    installSpeech([voice('Samantha', 'en-US', true)])
-
-    const { result } = renderHook(() => useSpeech())
-
-    expect(result.current.voiceId).toBe(idOf('Samantha', 'en-US'))
   })
 })
 

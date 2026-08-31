@@ -138,7 +138,6 @@ earlier tests in the same file.
 │       ├── StatsBar/
 │       ├── Flashcard/
 │       ├── SpeakButton/           Icon button beside the term
-│       ├── VoicePicker/           Chooses the voice; hidden unless there are 2+
 │       ├── RevealButton/
 │       ├── GradeButtons/
 │       ├── SessionMessage/
@@ -155,6 +154,11 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
 - **Queue** (`hooks/useReviewSession/build-queue.ts`): collect every card that is
   due (`lib/sm2.isDue`) — new cards are always due — sorted most-overdue first.
   One card is shown at a time.
+- **The card holds its shape**: the word, its phonetics and the speaker button
+  are pinned inside the card and only the answer below them scrolls, so reading
+  a long definition never costs sight of what is being defined. The lower edge
+  of that scroll fades rather than cutting — the mask sits on a box with no
+  background of its own, so an answer too short to scroll fades nothing.
 - **Reveal → grade**: the user reveals the answer, then picks
   `Again / Hard / Good / Easy`. These map to SM-2 recall qualities `2 / 3 / 4 / 5`
   (`lib/review/grades.ts`). The buttons deliberately show no interval preview:
@@ -199,8 +203,9 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   `src/content.test.ts` checks that every card claiming a recording has one on
   disk and that its name matches the card id, so the deck and the folder cannot
   drift apart.
-- **Speech synthesis** (`lib/speech/`): the speaker button beside the term reads
-  the word aloud through the browser's own `speechSynthesis`. No audio ships with the
+- **Speech synthesis** (`lib/speech/`): the fallback for a card with no
+  recording — every card has one today, so it rarely speaks — through the
+  browser's own `speechSynthesis`. No audio ships with the
   deck and nothing is fetched, so the feature costs zero bytes and keeps
   working offline. Two details matter and are easy to get wrong: the utterance
   language is pinned to the chosen voice's own tag, because a phone set to
@@ -208,28 +213,13 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   and a locally installed voice is preferred over a remote one, since a remote
   voice needs the network. `speechSynthesis.cancel()` is called only when
   something is actually being spoken — cancelling an idle queue leaves iOS
-  silent for every later utterance. A device without the API simply gets no
-  button: `useSpeech` reports it and `App` then passes no `onSpeak`.
-- **Choosing the voice** (`lib/speech/voice-storage.ts`): which voice reads the
-  terms is the user's call, saved under `localStorage['engclair:voice:v1']` —
-  its own key, so resetting review progress cannot change how the app sounds.
-  The picker only appears when the device has two or more English voices: one
-  is not a choice. Apple's novelty and legacy voices are filtered out by their
-  `com.apple.speech.synthesis.voice.` prefix — an iPhone reports nineteen of
-  them (Bells, Boing, Zarvox, Trinoids…) against six real ones, and unfiltered
-  they bury the list. What survives is one voice per accent: Samantha en-US,
-  Daniel en-GB, Karen en-AU, Moira en-IE, Rishi en-IN, Tessa en-ZA. Enhanced
-  and Premium voices downloaded in iOS Settings never reach the web at all, so
-  that list is the whole of what an iPhone can offer. A voice is identified by more than its `voiceURI` — nothing
-  in the spec makes that unique, and a device can hand two entries the same
-  one. Keying on it alone dropped a voice from the list and, worse, made
-  picking one of them play the other. `listEnglishVoices` sorts on one key, installed before
-  remote, and stably, so the device's own order survives inside each group and
-  the first entry is exactly what plays when nothing has been chosen — list and
-  default can never disagree. A saved voice that has since been deleted from
-  the device falls back to that same first entry rather than going silent. The
-  list arrives asynchronously, so the hook also listens for `voiceschanged`;
-  reading it on first render alone returns an empty array.
+  silent for every later utterance. Apple's novelty voices — Bells, Boing,
+  Zarvox and the rest, nineteen of the twenty-five an iPhone reports — can
+  never be picked; they share a `com.apple.speech.synthesis.voice.` prefix, and
+  a device holding nothing else still speaks rather than falling silent. There
+  is no voice picker: with the deck recorded, the choice governed a case that
+  no longer happens. A device without the API simply gets no button:
+  `useSpeech` reports it and `App` then passes no `onSpeak`.
 - **Offline** (`vite-plugin-pwa`, configured in `vite.config.ts`): the app is
   installable and runs with no network at all. Nothing is fetched at runtime —
   the deck is bundled and progress is local — so precaching the shell is enough

@@ -6,7 +6,6 @@ import { RevealButton } from '@/components/RevealButton'
 import { SessionMessage } from '@/components/SessionMessage'
 import { StatsBar } from '@/components/StatsBar'
 import { ThemePicker } from '@/components/ThemePicker'
-import { VoicePicker } from '@/components/VoicePicker'
 import { content } from '@/content'
 import { useReviewSession } from '@/hooks/useReviewSession'
 import { useSpeech } from '@/hooks/useSpeech'
@@ -65,16 +64,6 @@ export function App() {
               <RevealButton label={ui.card.showAnswer} onClick={session.reveal} />
             )}
           </div>
-        ) : null}
-
-        {/* One voice is not a choice, and no voice is not a picker. */}
-        {speech.voices.length > 1 ? (
-          <VoicePicker
-            text={ui.voice}
-            voices={speech.voices}
-            selected={speech.voiceId}
-            onSelect={speech.setVoice}
-          />
         ) : null}
 
         {/* Temporary, while an accent is being chosen. */}

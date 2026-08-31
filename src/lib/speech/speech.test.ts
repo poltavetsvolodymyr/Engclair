@@ -3,14 +3,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  isSpeechSupported,
-  listEnglishVoices,
-  onVoicesChanged,
-  resolveVoiceId,
-  speak,
-  stopSpeaking,
-} from './speech'
+import { isSpeechSupported, speak, stopSpeaking } from './speech'
 
 class FakeUtterance {
   text: string
@@ -29,19 +22,14 @@ function voice(
   lang: string,
   localService: boolean,
   name = `${lang}${localService ? ' (local)' : ' (remote)'}`,
+  voiceURI = `uri:${name}`,
 ): SpeechSynthesisVoice {
-  return { lang, localService, name, voiceURI: `uri:${name}`, default: false }
-}
-
-/** How lib/speech identifies the voice `voice()` above would build. */
-function idOf(name: string, lang: string): string {
-  return `uri:${name}|${name}|${lang}`
+  return { lang, localService, name, voiceURI, default: false }
 }
 
 /** Installs a stand-in for the speech API and hands back what it recorded. */
 function installSpeech(voices: SpeechSynthesisVoice[] = []) {
   const spoken: FakeUtterance[] = []
-  const target = new EventTarget()
   const synth = {
     speaking: false,
     pending: false,
@@ -54,8 +42,6 @@ function installSpeech(voices: SpeechSynthesisVoice[] = []) {
       synth.speaking = false
       synth.pending = false
     }),
-    addEventListener: target.addEventListener.bind(target),
-    removeEventListener: target.removeEventListener.bind(target),
   }
 
   Object.defineProperty(window, 'speechSynthesis', {
@@ -67,7 +53,7 @@ function installSpeech(voices: SpeechSynthesisVoice[] = []) {
     configurable: true,
   })
 
-  return { synth, spoken, target }
+  return { synth, spoken }
 }
 
 afterEach(() => {
@@ -193,160 +179,19 @@ describe('stopSpeaking', () => {
   })
 })
 
-describe('listEnglishVoices', () => {
-  it('is empty on a device without the API', () => {
-    expect(listEnglishVoices()).toEqual([])
-  })
-
-  it('leaves out every voice that is not English', () => {
-    installSpeech([voice('uk-UA', true), voice('en-US', true), voice('de-DE', true)])
-
-    expect(listEnglishVoices().map((v) => v.lang)).toEqual(['en-US'])
-  })
-
-  it('puts installed voices before ones that need the network', () => {
-    installSpeech([
-      voice('en-GB', false, 'Daniel'),
-      voice('en-US', true, 'Samantha'),
-      voice('en-AU', true, 'Karen'),
-    ])
-
-    // Within a group the device's own order is kept, so Samantha stays ahead
-    // of Karen rather than being reordered by name.
-    expect(listEnglishVoices().map((v) => v.name)).toEqual([
-      'Samantha',
-      'Karen',
-      'Daniel',
-    ])
-  })
-
-  it('leads with the voice that speaks when nothing has been chosen', () => {
-    installSpeech([
-      voice('en-GB', false, 'Daniel'),
-      voice('en-US', true, 'Samantha'),
-      voice('en-AU', true, 'Karen'),
-    ])
-
-    expect(listEnglishVoices()[0].id).toBe(resolveVoiceId(null))
-  })
-
-  it('lists a voice once even when the device repeats it', () => {
-    const duplicate = voice('en-US', true, 'Samantha')
-    installSpeech([duplicate, duplicate])
-
-    expect(listEnglishVoices()).toHaveLength(1)
-  })
-
-  it('keeps two different voices that share a URI', () => {
-    // Nothing in the spec makes voiceURI unique. Collapsing on it alone hid
-    // whichever voice came second — and made picking one play the other.
-    const compact = voice('en-US', true, 'Ava')
-    const enhanced = { ...voice('en-US', true, 'Ava (Enhanced)'), voiceURI: compact.voiceURI }
-    installSpeech([compact, enhanced])
-
-    expect(listEnglishVoices().map((v) => v.name)).toEqual(['Ava', 'Ava (Enhanced)'])
-  })
-})
-
-describe('resolveVoiceId', () => {
-  it('is null on a device without the API', () => {
-    expect(resolveVoiceId(idOf('Samantha', 'en-US'))).toBeNull()
-  })
-
-  it('keeps the chosen voice when it is still installed', () => {
-    installSpeech([voice('en-US', true, 'Samantha'), voice('en-GB', false, 'Daniel')])
-
-    expect(resolveVoiceId(idOf('Daniel', 'en-GB'))).toBe(idOf('Daniel', 'en-GB'))
-  })
-
-  it('falls back to the best voice when the chosen one is gone', () => {
-    installSpeech([voice('en-US', true, 'Samantha')])
-
-    expect(resolveVoiceId('uri:Deleted|Deleted|en-US')).toBe(idOf('Samantha', 'en-US'))
-  })
-})
-
-describe('speak with a chosen voice', () => {
-  it('uses the voice it is asked for, local or not', () => {
-    const { spoken } = installSpeech([
-      voice('en-US', true, 'Samantha'),
-      voice('en-GB', false, 'Daniel'),
-    ])
-
-    speak('ubiquitous', { voiceId: idOf('Daniel', 'en-GB') })
-
-    expect(spoken[0].voice?.name).toBe('Daniel')
-    expect(spoken[0].lang).toBe('en-GB')
-  })
-
-  it('ignores a chosen voice that is no longer installed', () => {
-    const { spoken } = installSpeech([voice('en-US', true, 'Samantha')])
-
-    speak('ubiquitous', { voiceId: 'uri:Deleted|Deleted|en-US' })
-
-    expect(spoken[0].voice?.name).toBe('Samantha')
-  })
-})
-
-describe('onVoicesChanged', () => {
-  it('calls back when the browser fills the list in', () => {
-    const { target } = installSpeech()
-    const listener = vi.fn()
-
-    onVoicesChanged(listener)
-    target.dispatchEvent(new Event('voiceschanged'))
-
-    expect(listener).toHaveBeenCalledTimes(1)
-  })
-
-  it('stops calling back once unsubscribed', () => {
-    const { target } = installSpeech()
-    const listener = vi.fn()
-
-    onVoicesChanged(listener)()
-    target.dispatchEvent(new Event('voiceschanged'))
-
-    expect(listener).not.toHaveBeenCalled()
-  })
-
-  it('hands back a no-op unsubscribe when unsupported', () => {
-    expect(() => onVoicesChanged(vi.fn())()).not.toThrow()
-  })
-})
-
 /**
  * The English voices a real iPhone reports, in the order it reports them.
  * Nineteen of the twenty-five are novelty voices; only six can pronounce.
  */
 const IPHONE_VOICES: SpeechSynthesisVoice[] = (
   [
-    ['Samantha', 'en-US', 'com.apple.voice.super-compact.en-US.Samantha'],
     ['Albert', 'en-US', 'com.apple.speech.synthesis.voice.Albert'],
-    ['Bad News', 'en-US', 'com.apple.speech.synthesis.voice.BadNews'],
-    ['Bahh', 'en-US', 'com.apple.speech.synthesis.voice.Bahh'],
     ['Bells', 'en-US', 'com.apple.speech.synthesis.voice.Bells'],
     ['Boing', 'en-US', 'com.apple.speech.synthesis.voice.Boing'],
-    ['Bubbles', 'en-US', 'com.apple.speech.synthesis.voice.Bubbles'],
-    ['Cellos', 'en-US', 'com.apple.speech.synthesis.voice.Cellos'],
-    ['Wobble', 'en-US', 'com.apple.speech.synthesis.voice.Deranged'],
-    ['Fred', 'en-US', 'com.apple.speech.synthesis.voice.Fred'],
-    ['Good News', 'en-US', 'com.apple.speech.synthesis.voice.GoodNews'],
-    ['Jester', 'en-US', 'com.apple.speech.synthesis.voice.Hysterical'],
-    ['Junior', 'en-US', 'com.apple.speech.synthesis.voice.Junior'],
-    ['Kathy', 'en-US', 'com.apple.speech.synthesis.voice.Kathy'],
-    ['Organ', 'en-US', 'com.apple.speech.synthesis.voice.Organ'],
-    ['Superstar', 'en-US', 'com.apple.speech.synthesis.voice.Princess'],
-    ['Ralph', 'en-US', 'com.apple.speech.synthesis.voice.Ralph'],
-    ['Trinoids', 'en-US', 'com.apple.speech.synthesis.voice.Trinoids'],
-    ['Whisper', 'en-US', 'com.apple.speech.synthesis.voice.Whisper'],
     ['Zarvox', 'en-US', 'com.apple.speech.synthesis.voice.Zarvox'],
+    ['Samantha', 'en-US', 'com.apple.voice.super-compact.en-US.Samantha'],
     ['Daniel', 'en-GB', 'com.apple.voice.super-compact.en-GB.Daniel'],
-    ['Karen', 'en-AU', 'com.apple.voice.super-compact.en-AU.Karen'],
-    ['Moira', 'en-IE', 'com.apple.voice.super-compact.en-IE.Moira'],
-    ['Rishi', 'en-IN', 'com.apple.voice.super-compact.en-IN.Rishi'],
-    ['Tessa', 'en-ZA', 'com.apple.voice.super-compact.en-ZA.Tessa'],
     ['Alice', 'it-IT', 'com.apple.voice.super-compact.it-IT.Alice'],
-    ['Alva', 'sv-SE', 'com.apple.voice.super-compact.sv-SE.Alva'],
   ] as const
 ).map(([name, lang, voiceURI]) => ({
   name,
@@ -359,31 +204,10 @@ const IPHONE_VOICES: SpeechSynthesisVoice[] = (
 }))
 
 describe('a real iPhone', () => {
-  it('offers only the voices that can actually pronounce English', () => {
-    installSpeech(IPHONE_VOICES)
-
-    expect(listEnglishVoices().map((v) => `${v.name} ${v.lang}`)).toEqual([
-      'Samantha en-US',
-      'Daniel en-GB',
-      'Karen en-AU',
-      'Moira en-IE',
-      'Rishi en-IN',
-      'Tessa en-ZA',
-    ])
-  })
-
-  it('never lets a novelty voice become the default', () => {
-    installSpeech(IPHONE_VOICES)
-
-    expect(resolveVoiceId(null)).toContain('Samantha')
-  })
-
-  it('refuses to speak as Zarvox even when asked by id', () => {
+  it('speaks with a voice that can pronounce, not with Zarvox', () => {
     const { spoken } = installSpeech(IPHONE_VOICES)
 
-    speak('ubiquitous', {
-      voiceId: 'com.apple.speech.synthesis.voice.Zarvox|Zarvox|en-US',
-    })
+    speak('ubiquitous')
 
     expect(spoken[0].voice?.name).toBe('Samantha')
   })
@@ -394,8 +218,8 @@ describe('a real iPhone', () => {
     )
     const { spoken } = installSpeech(noveltyOnly)
 
-    expect(listEnglishVoices()).toHaveLength(noveltyOnly.length)
     speak('ubiquitous')
+
     expect(spoken[0].voice?.name).toBe('Albert')
   })
 })

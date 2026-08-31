@@ -52,11 +52,6 @@ export const content: Content = {
       button: 'Reset progress',
       confirm: 'Reset all learning progress? This cannot be undone.',
     },
-    // Shown only when the device has more than one English voice to choose
-    // between. The voice names themselves come from the operating system.
-    voice: {
-      label: 'Voice',
-    },
     // Temporary, while an accent colour is being chosen. Delete this section
     // together with the ThemePicker component once one is settled on.
     themes: {
