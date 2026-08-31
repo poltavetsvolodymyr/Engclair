@@ -21,13 +21,16 @@ export function App() {
 
   return (
     <div className={styles.app}>
-      <Header text={ui.header} />
+      {/* Pinned chrome: identity and progress stay put while cards scroll. */}
+      <div className={styles.top}>
+        <Header text={ui.header} />
 
-      <StatsBar
-        text={ui.stats}
-        reviewed={session.reviewedCount}
-        remaining={session.remaining}
-      />
+        <StatsBar
+          text={ui.stats}
+          reviewed={session.reviewedCount}
+          remaining={session.remaining}
+        />
+      </div>
 
       <main className={styles.main}>
         {session.currentCard ? (
@@ -41,20 +44,23 @@ export function App() {
         )}
       </main>
 
-      {session.currentCard ? (
-        <div className={styles.actions}>
-          {session.revealed ? (
-            <GradeButtons text={ui.grades} onGrade={session.grade} />
-          ) : (
-            <RevealButton label={ui.card.showAnswer} onClick={session.reveal} />
-          )}
-        </div>
-      ) : null}
+      {/* Pinned chrome: the controls sit under the thumb, not below the page. */}
+      <div className={styles.bottom}>
+        {session.currentCard ? (
+          <div className={styles.actions}>
+            {session.revealed ? (
+              <GradeButtons text={ui.grades} onGrade={session.grade} />
+            ) : (
+              <RevealButton label={ui.card.showAnswer} onClick={session.reveal} />
+            )}
+          </div>
+        ) : null}
 
-      {/* Temporary, while an accent is being chosen. */}
-      <ThemePicker text={ui.themes} selected={theme} onSelect={setTheme} />
+        {/* Temporary, while an accent is being chosen. */}
+        <ThemePicker text={ui.themes} selected={theme} onSelect={setTheme} />
 
-      <Footer text={ui.reset} note={ui.footer} onReset={session.reset} />
+        <Footer text={ui.reset} note={ui.footer} onReset={session.reset} />
+      </div>
     </div>
   )
 }

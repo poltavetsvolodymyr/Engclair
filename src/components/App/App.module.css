@@ -1,20 +1,48 @@
-/* Layout only. Mobile-first: a single centred column sized for one-thumb use. */
+/* Layout only. Mobile-first: a single centred column sized for one-thumb use.
+ *
+ * The shell is a fixed frame exactly one viewport tall, not a page that grows:
+ * the chrome above and below stays put and only .main scrolls. That is what
+ * separates an app from a document — the title and the grade buttons do not
+ * slide away when a long definition is read.
+ */
 
 .app {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
   width: 100%;
   max-width: var(--layout-max-width);
+  height: 100dvh;
   margin: 0 auto;
-  padding: max(var(--space-lg), env(safe-area-inset-top)) var(--space-lg)
-    max(var(--space-lg), env(safe-area-inset-bottom));
-  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: max(var(--space-lg), env(safe-area-inset-top)) var(--space-lg) 0;
 }
 
 .main {
   flex: 1;
+  /* Without this a flex child refuses to shrink below its content, and the
+     card would push the buttons off the frame instead of scrolling. */
+  min-height: 0;
   display: flex;
+  overflow-y: auto;
+  /* The scroll stops here: reaching the end must not hand the gesture to the
+     page behind it. */
+  overscroll-behavior: contain;
+  /* Padding rather than a gap on the column, so the card's shadow falls
+     inside the scroll box instead of being clipped against its edge. */
+  padding: var(--space-lg);
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: 0 var(--space-lg) max(var(--space-lg), env(safe-area-inset-bottom));
 }
 
 .actions {
