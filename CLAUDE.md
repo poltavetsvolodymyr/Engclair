@@ -90,10 +90,16 @@ earlier tests in the same file.
 
 ```
 .
-├── index.html                     App entry HTML (title, meta, theme-color)
-├── vite.config.ts                 base '/Engclair/' + '@' alias
+├── index.html                     App entry HTML (title, meta, install tags)
+├── vite.config.ts                 base '/Engclair/' + '@' alias + PWA manifest
 ├── tsconfig*.json                 Project-references TS setup (app + node)
-├── public/favicon.svg
+├── scripts/generate-icons.py      Redraws the icons below; no dependencies
+├── public/
+│   ├── favicon.svg                The mark, and the source of its geometry
+│   ├── icon-192.png               Manifest icons  [generated]
+│   ├── icon-512.png                               [generated]
+│   ├── icon-maskable-512.png      Safe-zone variant for launchers [generated]
+│   └── apple-touch-icon.png       iOS home screen [generated]
 ├── src/
 │   ├── main.tsx                   React bootstrap; imports global CSS
 │   ├── content.ts                 >>> THE ONLY FILE YOU NORMALLY EDIT <<<
@@ -157,6 +163,23 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   to `localStorage['engclair:progress:v1']` after every grade. All access is
   try/caught, so private mode or a full quota just behaves like a fresh start.
   Bump the key suffix if the state shape ever changes.
+- **Offline** (`vite-plugin-pwa`, configured in `vite.config.ts`): the app is
+  installable and runs with no network at all. Nothing is fetched at runtime —
+  the deck is bundled and progress is local — so precaching the shell is enough
+  to make the whole thing work on a plane or a train. `navigateFallback` serves
+  `index.html` for any in-scope URL, so a deep link still opens the app offline.
+  The service worker is generated only by `npm run build`; `npm run dev` runs
+  without one.
+- **Updates**: `registerType: 'autoUpdate'` — a new service worker takes over on
+  the next visit, with no prompt to build or word it. That is safe here because
+  a grade is persisted the moment it is given, so a reload never loses work. Add
+  an update prompt only if that stops being true.
+- **The icons are generated** by `scripts/generate-icons.py` from the same
+  geometry as `public/favicon.svg` — a rounded square and an `E` of four bars.
+  It is plain Python with no packages to install, so no image library enters the
+  build. Change the mark in `favicon.svg`, mirror the numbers at the top of the
+  script, re-run it, and commit the PNGs: they are source assets, not build
+  output, and `dist/` stays the only thing that is never committed.
 
 ## Commands
 
@@ -168,9 +191,13 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
 | `npm run test:watch` | Re-run tests on change                    |
 | `npm run build`    | Type-check (`tsc -b`) then production build |
 | `npm run preview`  | Serve the built `dist/` locally             |
+| `python3 scripts/generate-icons.py` | Redraw the app icons in `public/` |
 
 Note: `npm run preview` and the deployed site serve under the `/Engclair/` base
 path; `npm run dev` serves under `/Engclair/` too (Vite applies `base` in dev).
+
+To try the offline behaviour, use `npm run preview` rather than `npm run dev` —
+the service worker only exists in a production build.
 
 ## Deployment
 
