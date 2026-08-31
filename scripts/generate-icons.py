@@ -18,15 +18,17 @@ from pathlib import Path
 # The mark, in the 64-unit space of public/favicon.svg. Keep the two in sync.
 CANVAS = 64
 CORNER_RADIUS = 14
-BG = (0xB4, 0x53, 0x09)  # accent amber, matching favicon.svg
+BG = (0x3F, 0x62, 0x12)  # --color-accent for the forest theme, as favicon.svg
 FG = (0xFA, 0xF6, 0xEF)  # --color-bg, the cream the app is painted on
 
-# "M22 18h20v7H29v6h11v7H29v6h13v7H22z" — a stem and three arms.
+# "M22 15.5h20v7H29v6h11v7H29v6h13v7H22z" — a stem and three arms.
+# Arms are 7 deep with 6 between them, so the E stands 33 tall and starts at
+# 15.5 to sit dead centre of the 64-unit canvas.
 BARS = (
-    (22, 18, 29, 51),  # stem
-    (29, 18, 42, 25),  # top arm
-    (29, 31, 40, 38),  # middle arm
-    (29, 44, 42, 51),  # bottom arm
+    (22, 15.5, 29, 48.5),  # stem
+    (29, 15.5, 42, 22.5),  # top arm
+    (29, 28.5, 40, 35.5),  # middle arm
+    (29, 41.5, 42, 48.5),  # bottom arm
 )
 
 SUBSAMPLES = 4  # per axis, inside the corner squares only

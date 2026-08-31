@@ -10,18 +10,28 @@
  * which is why every theme keeps the same measured contrast on body text.
  *
  * Contrast of accent against white / cream, and white against accent:
+ *   forest     7.1 / 6.6 / 7.1
  *   amber      5.0 / 4.7 / 5.0
  *   terracotta 5.2 / 4.8 / 5.2
  *   crimson    8.0 / 7.4 / 8.0
- *   forest     7.1 / 6.6 / 7.1
  *   indigo     7.9 / 7.3 / 7.9
  * All AA or better; the accent never carries anything but white text.
  */
 
-/* `:root` here makes amber the default before any theme is chosen, so the app
-   is correctly painted even if JavaScript never runs. Later blocks share the
-   same specificity and win purely on source order when their attribute is set. */
+/* Forest is the default, and `:root` here paints it before any theme is
+   chosen — so the app looks right even if JavaScript never runs.
+   This block must stay first: every block has the same specificity, so a
+   theme set on <html> can only override `:root` by coming later in the file. */
 :root,
+[data-theme='forest'],
+[data-swatch='forest'] {
+  --color-accent: #3f6212;
+  --color-accent-soft: rgba(63, 98, 18, 0.09);
+  --shadow-accent: 0 1px 2px rgba(54, 83, 20, 0.24),
+    0 8px 18px -6px rgba(54, 83, 20, 0.38);
+  --shadow-accent-pressed: 0 1px 2px rgba(54, 83, 20, 0.3);
+}
+
 [data-theme='amber'],
 [data-swatch='amber'] {
   --color-accent: #b45309;
@@ -47,15 +57,6 @@
   --shadow-accent: 0 1px 2px rgba(136, 19, 55, 0.24),
     0 8px 18px -6px rgba(136, 19, 55, 0.38);
   --shadow-accent-pressed: 0 1px 2px rgba(136, 19, 55, 0.3);
-}
-
-[data-theme='forest'],
-[data-swatch='forest'] {
-  --color-accent: #3f6212;
-  --color-accent-soft: rgba(63, 98, 18, 0.09);
-  --shadow-accent: 0 1px 2px rgba(54, 83, 20, 0.24),
-    0 8px 18px -6px rgba(54, 83, 20, 0.38);
-  --shadow-accent-pressed: 0 1px 2px rgba(54, 83, 20, 0.3);
 }
 
 [data-theme='indigo'],

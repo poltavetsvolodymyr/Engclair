@@ -17,8 +17,8 @@ describe('THEME_IDS', () => {
     expect(new Set(THEME_IDS).size).toBe(THEME_IDS.length)
   })
 
-  it('starts with the default', () => {
-    expect(THEME_IDS[0]).toBe(DEFAULT_THEME)
+  it('includes the default', () => {
+    expect(THEME_IDS).toContain(DEFAULT_THEME)
   })
 })
 

@@ -57,7 +57,7 @@ These exist so the app stays easy to extend. Follow them when adding anything.
   block in `content.ts`, `ThemePickerText` in `types/ui.ts`, `types/theme.ts`,
   and the two lines in `App.tsx` — then fold the winning accent's four
   properties from `themes.css` back into `tokens.css` and delete `themes.css`.
-- The theme is a light warm one: cream page, white cards, dark amber accent.
+- The theme is a light warm one: cream page, white cards, deep forest accent.
   Depth comes from the `--shadow-*` tokens, not from outlines — cards are lifted
   off the page rather than boxed in, and pressable things drop their shadow and
   shift 1px down. Keep new surfaces consistent with that.

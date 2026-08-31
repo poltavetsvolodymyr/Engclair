@@ -9,7 +9,7 @@ import type { ThemeId } from '@/types'
  */
 const STORAGE_KEY = 'engclair:theme:v1'
 
-/** Display order in the picker. The first entry is the default. */
+/** Display order in the picker: warm to cool, independent of the default. */
 export const THEME_IDS: ThemeId[] = [
   'amber',
   'terracotta',
@@ -18,7 +18,8 @@ export const THEME_IDS: ThemeId[] = [
   'indigo',
 ]
 
-export const DEFAULT_THEME: ThemeId = THEME_IDS[0]
+/** Must match whichever accent `:root` paints in styles/themes.css. */
+export const DEFAULT_THEME: ThemeId = 'forest'
 
 function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && (THEME_IDS as string[]).includes(value)
