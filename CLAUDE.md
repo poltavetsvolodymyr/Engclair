@@ -17,6 +17,19 @@ TypeScript. Deployed to GitHub Pages at `https://<user>.github.io/Engclair/`.
 - Card `id`s are **permanent** — they key the saved SM-2 progress in
   localStorage. Renaming an id resets that card's history for every user.
 
+## Working agreement
+
+- **No commit lands unexplained.** Every commit is preceded by a walk through
+  the change file by file — what moved and, in one line, why. The report is for
+  visibility, not for permission: write it, then commit and push in the same
+  breath. Do not sit waiting for approval.
+- A report is a report, not a raw `git diff` dumped whole. Show the exact diff
+  for a file when the owner asks for it.
+- Stop and ask first only when the change is hard to walk back — history
+  rewrites, a deleted branch, anything touching saved progress or card `id`s.
+- Everything before the push is free: read, edit, install, run the tests. The
+  work happens in a throwaway cloud container, so only the push is irreversible.
+
 ## Architecture conventions
 
 These exist so the app stays easy to extend. Follow them when adding anything.
