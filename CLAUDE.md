@@ -182,9 +182,14 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   offline would quietly lose them.
 - **Recording clips** (`scripts/generate-audio.py`): `pip install piper-tts
   imageio-ffmpeg`, then run it. Piper is a neural synthesiser that runs
-  offline; the American voice it uses is `en-us-ryan-high`, downloaded once
-  into the git-ignored `.cache/` from a piper GitHub release (the same models
-  are on Hugging Face, which some networks block). ffmpeg arrives as a binary
+  offline; the voice is `en-us-libritts-high`, speaker 0, downloaded once into
+  the git-ignored `.cache/` from a piper GitHub release (the same models are on
+  Hugging Face, which some networks block). LibriTTS is the only multi-speaker
+  model in that release, and that is why it wins: the single-speaker American
+  voices mispronounce words outright — `ryan-high` reads "candid" closer to
+  "kentar" — which no setting can fix, whereas 904 speakers give somewhere to
+  go. Each term is synthesised with a full stop after it; given a bare word the
+  model has no sentence to end and clips the last syllable. ffmpeg arrives as a binary
   inside the pip package, so nothing has to be installed system-wide. The
   script records every term, encodes, and adds `audio:` to each card — the
   files and the edit are both source, to be reviewed and committed.

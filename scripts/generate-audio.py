@@ -13,7 +13,7 @@ recorded ahead of time instead, and the deck carries the audio.
 Writes public/audio/<card id>.mp3 and adds `audio:` to the matching card in
 src/content.ts. Both are source assets: review the diff, then commit them.
 
-The voice model is ~105 MB and is *not* committed. It is downloaded once into
+The voice model is ~120 MB and is *not* committed. It is downloaded once into
 .cache/ (git-ignored) from the piper release below, which mirrors the models
 otherwise hosted on Hugging Face.
 """
@@ -32,8 +32,13 @@ CONTENT = ROOT / 'src' / 'content.ts'
 AUDIO_DIR = ROOT / 'public' / 'audio'
 CACHE = ROOT / '.cache' / 'piper'
 
-# A male American voice at the release's highest quality tier.
-VOICE = 'en-us-ryan-high'
+# An American voice at the release's highest quality tier. LibriTTS is the only
+# multi-speaker model in it, which is what made the choice possible: the
+# single-speaker voices mispronounced words outright — ryan-high read "candid"
+# as something closer to "kentar" — and that is not fixable by settings.
+# Speakers 260 and 600 were the runners-up if 0 ever needs replacing.
+VOICE = 'en-us-libritts-high'
+SPEAKER = 0
 VOICE_URL = (
     'https://github.com/rhasspy/piper/releases/download/v0.0.2/'
     f'voice-{VOICE}.tar.gz'
@@ -114,7 +119,10 @@ def main() -> None:
 
     source = CONTENT.read_text(encoding='utf-8')
     cards = read_cards(source)
-    print(f'{len(cards)} cards, voice "{VOICE}"{" (dry run)" if args.dry_run else ""}')
+    print(
+        f'{len(cards)} cards, voice "{VOICE}" speaker {SPEAKER}'
+        f'{" (dry run)" if args.dry_run else ""}'
+    )
 
     if not args.dry_run:
         model, convert = voice_model(), ffmpeg()
@@ -136,8 +144,10 @@ def main() -> None:
             raw = AUDIO_DIR / f'{card_id}.wav'
             subprocess.run(
                 [sys.executable, '-m', 'piper', '--model', str(model),
-                 '--output_file', str(raw)],
-                input=term, text=True, check=True, capture_output=True,
+                 '--speaker', str(SPEAKER), '--output_file', str(raw)],
+                # The full stop matters: given a bare word the model has no
+                # sentence to end and clips the last syllable short.
+                input=f'{term}.', text=True, check=True, capture_output=True,
             )
             subprocess.run(
                 [convert, '-y', '-loglevel', 'error', '-i', str(raw),
