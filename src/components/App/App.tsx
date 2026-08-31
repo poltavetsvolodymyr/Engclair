@@ -46,7 +46,9 @@ export function App() {
             text={ui.card}
             revealed={session.revealed}
             speaking={speech.speaking}
-            onSpeak={speech.supported ? () => speech.speak(card.term) : undefined}
+            onSpeak={
+              speech.supported ? () => speech.speak(card.term, card.audio) : undefined
+            }
           />
         ) : (
           <SessionMessage text={session.reviewedCount > 0 ? ui.done : ui.empty} />

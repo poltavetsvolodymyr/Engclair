@@ -93,7 +93,9 @@ earlier tests in the same file.
 ├── index.html                     App entry HTML (title, meta, install tags)
 ├── vite.config.ts                 base '/Engclair/' + '@' alias + PWA manifest
 ├── tsconfig*.json                 Project-references TS setup (app + node)
-├── scripts/generate-icons.py      Redraws the icons below; no dependencies
+├── scripts/
+│   ├── generate-icons.py          Redraws the icons below; no dependencies
+│   └── generate-audio.mjs         Records the deck with a macOS voice
 ├── public/
 │   ├── favicon.svg                The mark, and the source of its geometry
 │   ├── voices.html                Lists the device's voices  [TEMPORARY]
@@ -119,6 +121,7 @@ earlier tests in the same file.
 │   ├── lib/                       Framework-free logic
 │   │   ├── sm2/                   The algorithm; pure, no React, no storage
 │   │   ├── storage/               localStorage load/save/clear of progress
+│   │   ├── audio/                 Plays a card's recorded clip, if it has one
 │   │   ├── speech/                Pronunciation + which voice, via the browser
 │   │   ├── theme/                 Theme list + persistence  [TEMPORARY]
 │   │   └── review/                Grade -> SM-2 quality bridge
@@ -168,8 +171,23 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   to `localStorage['engclair:progress:v1']` after every grade. All access is
   try/caught, so private mode or a full quota just behaves like a fresh start.
   Bump the key suffix if the state shape ever changes.
-- **Pronunciation** (`lib/speech/`): the speaker button beside the term reads it
-  aloud through the browser's own `speechSynthesis`. No audio ships with the
+- **Pronunciation** is two sources with one button. A card may carry a recorded
+  clip (`audio` in `types/card.ts`, a file in `public/audio/`); when it does,
+  `lib/audio` plays it, and the synthesiser below is the fallback for
+  everything else. A clip that will not play — missing, undecodable, blocked —
+  falls back too, so the button always makes a sound. A failure arrives twice
+  over, as the element's `error` event *and* a rejected `play()` promise, so a
+  clip settles exactly once; counting both made the app speak the word twice.
+  Clips are precached with the shell (`globPatterns` in `vite.config.ts`) or
+  offline would quietly lose them.
+- **Recording clips** (`scripts/generate-audio.mjs`, macOS only): `say` is given
+  the Enhanced and Premium voices downloaded in System Settings, while Safari
+  on iOS is given none of them — so the good voice a phone will not hand the
+  web gets baked into the deck from a Mac instead. The script records every
+  term, converts with `afconvert`, and adds `audio:` to each card. Both the
+  files and the edit are source, to be reviewed and committed.
+- **Speech synthesis** (`lib/speech/`): the speaker button beside the term reads
+  the word aloud through the browser's own `speechSynthesis`. No audio ships with the
   deck and nothing is fetched, so the feature costs zero bytes and keeps
   working offline. Two details matter and are easy to get wrong: the utterance
   language is pinned to the chosen voice's own tag, because a phone set to

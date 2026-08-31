@@ -13,6 +13,12 @@ export interface Card {
   term: string
   /** Optional IPA pronunciation shown under the term, e.g. "/prəˈfaʊnd/". */
   phonetic?: string
+  /**
+   * Optional recorded pronunciation: a file name inside `public/audio/`.
+   * Preferred over speech synthesis when present, and fallen back from when
+   * it cannot be played, so a card without one still speaks.
+   */
+  audio?: string
   /** Grammatical label, e.g. "adjective", "noun", "phrasal verb". */
   partOfSpeech: string
   /** English-only explanation shown on the back of the card. */

@@ -69,13 +69,37 @@ function installSpeech(voices: SpeechSynthesisVoice[] = []) {
   return { synth, spoken, arrive }
 }
 
+class FakeAudio {
+  static instances: FakeAudio[] = []
+
+  src: string
+  onplaying: (() => void) | null = null
+  onended: (() => void) | null = null
+  onerror: (() => void) | null = null
+  pause = vi.fn()
+  play = vi.fn(() => Promise.resolve())
+
+  constructor(src: string) {
+    this.src = src
+    FakeAudio.instances.push(this)
+  }
+}
+
+/** The last element the clip player created. */
+function latestClip(): FakeAudio {
+  return FakeAudio.instances[FakeAudio.instances.length - 1]
+}
+
 beforeEach(() => {
   localStorage.clear()
+  FakeAudio.instances = []
+  Object.defineProperty(globalThis, 'Audio', { value: FakeAudio, configurable: true })
 })
 
 afterEach(() => {
   Reflect.deleteProperty(window, 'speechSynthesis')
   Reflect.deleteProperty(globalThis, 'SpeechSynthesisUtterance')
+  Reflect.deleteProperty(globalThis, 'Audio')
   vi.restoreAllMocks()
 })
 
@@ -178,5 +202,60 @@ describe('useSpeech voices', () => {
     const { result } = renderHook(() => useSpeech())
 
     expect(result.current.voiceId).toBe(idOf('Samantha', 'en-US'))
+  })
+})
+
+describe('useSpeech with a recorded clip', () => {
+  it('synthesises when the card has no recording', () => {
+    const { synth } = installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('ubiquitous'))
+
+    expect(synth.speak).toHaveBeenCalledTimes(1)
+    expect(FakeAudio.instances).toHaveLength(0)
+  })
+
+  it('prefers the recording, and does not also speak', () => {
+    const { synth } = installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+
+    expect(latestClip().src).toContain('audio/ubiquitous.m4a')
+    expect(synth.speak).not.toHaveBeenCalled()
+  })
+
+  it('follows the clip from start to end', () => {
+    installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+    act(() => latestClip().onplaying?.())
+    expect(result.current.speaking).toBe(true)
+
+    act(() => latestClip().onended?.())
+    expect(result.current.speaking).toBe(false)
+  })
+
+  it('speaks the word when its recording will not play', () => {
+    const { synth } = installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('ubiquitous', 'missing.m4a'))
+    act(() => latestClip().onerror?.())
+
+    expect(synth.speak).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops the clip when the hook goes away', () => {
+    installSpeech()
+    const { result, unmount } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+    const clip = latestClip()
+    unmount()
+
+    expect(clip.pause).toHaveBeenCalledTimes(1)
   })
 })

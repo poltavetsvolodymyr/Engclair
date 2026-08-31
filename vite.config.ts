@@ -49,7 +49,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // Recorded clips are part of the shell: without them here, offline
+        // pronunciation would silently fall back to the synthesiser.
+        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,m4a,mp3,wav}'],
         // Single-page app: any in-scope navigation is served the shell.
         navigateFallback: '/Engclair/index.html',
         cleanupOutdatedCaches: true,

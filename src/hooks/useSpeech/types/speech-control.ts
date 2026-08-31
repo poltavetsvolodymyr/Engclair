@@ -5,7 +5,8 @@ export interface SpeechControl {
   supported: boolean
   /** True between the start and end of an utterance, for button feedback. */
   speaking: boolean
-  speak: (text: string) => void
+  /** Plays `audio` from `public/audio/` when given, else speaks `text`. */
+  speak: (text: string, audio?: string) => void
   /** Every English voice installed, best first. Empty until the list arrives. */
   voices: VoiceOption[]
   /** Id of the voice that will actually speak, chosen or fallen back to. */
