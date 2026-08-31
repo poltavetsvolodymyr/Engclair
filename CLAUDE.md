@@ -98,7 +98,6 @@ earlier tests in the same file.
 │   └── generate-audio.py          Records the deck with a neural voice
 ├── public/
 │   ├── favicon.svg                The mark; the only source of the icons
-│   ├── voices.html                Lists the device's voices  [TEMPORARY]
 │   ├── audio/                     One recording per card  [generated]
 │   ├── icon-192.png               Manifest icons  [generated]
 │   ├── icon-512.png                               [generated]
@@ -237,11 +236,6 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   the next visit, with no prompt to build or word it. That is safe here because
   a grade is persisted the moment it is given, so a reload never loses work. Add
   an update prompt only if that stops being true.
-- **`public/voices.html` is temporary.** It lists every voice
-  `speechSynthesis.getVoices()` reports on the device, English or not, with the
-  flags the picker reasons about. It exists to settle "why is my voice not in
-  the list" from the phone itself rather than by guesswork. Delete it once the
-  voice list is trusted.
 - **The icons are generated** from `public/favicon.svg` — an eclair under
   chocolate with Big Ben rising behind it — by `scripts/generate-icons.py`
   (`pip install cairosvg`). The SVG is the single source: edit it, re-run the
