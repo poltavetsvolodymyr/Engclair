@@ -1,30 +1,59 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { isSpeechSupported, speak as speakText, stopSpeaking } from '@/lib/speech'
+import {
+  isSpeechSupported,
+  listEnglishVoices,
+  loadVoiceUri,
+  onVoicesChanged,
+  resolveVoiceUri,
+  saveVoiceUri,
+  speak as speakText,
+  stopSpeaking,
+} from '@/lib/speech'
 
 import type { SpeechControl } from './types/speech-control'
 
 /**
- * Pronunciation for the card being reviewed.
+ * Pronunciation for the card being reviewed, and which voice says it.
  *
- * Keeps the one piece of state a component would otherwise need — whether the
- * device is currently talking — out of the components themselves.
+ * Keeps everything stateful out of the components: whether the device is
+ * talking, what voices it has, and which one the user settled on.
  */
 export function useSpeech(): SpeechControl {
   const [speaking, setSpeaking] = useState(false)
+  const [voices, setVoices] = useState(listEnglishVoices)
+  const [chosen, setChosen] = useState(loadVoiceUri)
 
   // A property of the device, not of this render.
   const supported = useMemo(isSpeechSupported, [])
 
+  // The voice list is populated asynchronously, so the first render above
+  // usually sees nothing. This fills it in when the browser is ready.
+  useEffect(() => onVoicesChanged(() => setVoices(listEnglishVoices())), [])
+
   // Closing the app mid-word should not leave the phone talking to itself.
   useEffect(() => stopSpeaking, [])
 
-  const speak = useCallback((text: string) => {
-    speakText(text, {
-      onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
-    })
+  // What will really be heard: the chosen voice may have been deleted from the
+  // device since it was picked, in which case this is the fallback.
+  // `voices` is a dependency because the list arriving changes the answer.
+  const voiceURI = useMemo(() => resolveVoiceUri(chosen), [chosen, voices])
+
+  const speak = useCallback(
+    (text: string) => {
+      speakText(text, {
+        voiceURI: chosen,
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      })
+    },
+    [chosen],
+  )
+
+  const setVoice = useCallback((uri: string) => {
+    setChosen(uri)
+    saveVoiceUri(uri)
   }, [])
 
-  return { supported, speaking, speak }
+  return { supported, speaking, speak, voices, voiceURI, setVoice }
 }

@@ -51,6 +51,10 @@ export interface ResetText {
   confirm: string
 }
 
+export interface VoicePickerText {
+  label: string
+}
+
 /** Temporary, while an accent is being chosen. Delete with the picker. */
 export interface ThemePickerText {
   label: string
@@ -67,6 +71,8 @@ export interface UiText {
   /** Shown after the last due card of a session is graded. */
   done: SessionMessageText
   reset: ResetText
+  /** Only shown when the device has more than one English voice installed. */
+  voice: VoicePickerText
   /** Temporary, while an accent is being chosen. Delete with the picker. */
   themes: ThemePickerText
   footer: string

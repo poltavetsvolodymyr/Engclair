@@ -3,7 +3,14 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { isSpeechSupported, speak, stopSpeaking } from './speech'
+import {
+  isSpeechSupported,
+  listEnglishVoices,
+  onVoicesChanged,
+  resolveVoiceUri,
+  speak,
+  stopSpeaking,
+} from './speech'
 
 class FakeUtterance {
   text: string
@@ -18,19 +25,18 @@ class FakeUtterance {
   }
 }
 
-function voice(lang: string, localService: boolean): SpeechSynthesisVoice {
-  return {
-    lang,
-    localService,
-    name: `${lang}${localService ? ' (local)' : ' (remote)'}`,
-    voiceURI: lang,
-    default: false,
-  }
+function voice(
+  lang: string,
+  localService: boolean,
+  name = `${lang}${localService ? ' (local)' : ' (remote)'}`,
+): SpeechSynthesisVoice {
+  return { lang, localService, name, voiceURI: `uri:${name}`, default: false }
 }
 
 /** Installs a stand-in for the speech API and hands back what it recorded. */
 function installSpeech(voices: SpeechSynthesisVoice[] = []) {
   const spoken: FakeUtterance[] = []
+  const target = new EventTarget()
   const synth = {
     speaking: false,
     pending: false,
@@ -43,6 +49,8 @@ function installSpeech(voices: SpeechSynthesisVoice[] = []) {
       synth.speaking = false
       synth.pending = false
     }),
+    addEventListener: target.addEventListener.bind(target),
+    removeEventListener: target.removeEventListener.bind(target),
   }
 
   Object.defineProperty(window, 'speechSynthesis', {
@@ -54,7 +62,7 @@ function installSpeech(voices: SpeechSynthesisVoice[] = []) {
     configurable: true,
   })
 
-  return { synth, spoken }
+  return { synth, spoken, target }
 }
 
 afterEach(() => {
@@ -177,5 +185,116 @@ describe('stopSpeaking', () => {
 
   it('survives a device without the API', () => {
     expect(() => stopSpeaking()).not.toThrow()
+  })
+})
+
+describe('listEnglishVoices', () => {
+  it('is empty on a device without the API', () => {
+    expect(listEnglishVoices()).toEqual([])
+  })
+
+  it('leaves out every voice that is not English', () => {
+    installSpeech([voice('uk-UA', true), voice('en-US', true), voice('de-DE', true)])
+
+    expect(listEnglishVoices().map((v) => v.lang)).toEqual(['en-US'])
+  })
+
+  it('puts installed voices before ones that need the network', () => {
+    installSpeech([
+      voice('en-GB', false, 'Daniel'),
+      voice('en-US', true, 'Samantha'),
+      voice('en-AU', true, 'Karen'),
+    ])
+
+    // Within a group the device's own order is kept, so Samantha stays ahead
+    // of Karen rather than being reordered by name.
+    expect(listEnglishVoices().map((v) => v.name)).toEqual([
+      'Samantha',
+      'Karen',
+      'Daniel',
+    ])
+  })
+
+  it('leads with the voice that speaks when nothing has been chosen', () => {
+    installSpeech([
+      voice('en-GB', false, 'Daniel'),
+      voice('en-US', true, 'Samantha'),
+      voice('en-AU', true, 'Karen'),
+    ])
+
+    expect(listEnglishVoices()[0].uri).toBe(resolveVoiceUri(null))
+  })
+
+  it('lists a voice once even when the device repeats it', () => {
+    const duplicate = voice('en-US', true, 'Samantha')
+    installSpeech([duplicate, duplicate])
+
+    expect(listEnglishVoices()).toHaveLength(1)
+  })
+})
+
+describe('resolveVoiceUri', () => {
+  it('is null on a device without the API', () => {
+    expect(resolveVoiceUri('uri:Samantha')).toBeNull()
+  })
+
+  it('keeps the chosen voice when it is still installed', () => {
+    installSpeech([voice('en-US', true, 'Samantha'), voice('en-GB', false, 'Daniel')])
+
+    expect(resolveVoiceUri('uri:Daniel')).toBe('uri:Daniel')
+  })
+
+  it('falls back to the best voice when the chosen one is gone', () => {
+    installSpeech([voice('en-US', true, 'Samantha')])
+
+    expect(resolveVoiceUri('uri:Deleted')).toBe('uri:Samantha')
+  })
+})
+
+describe('speak with a chosen voice', () => {
+  it('uses the voice it is asked for, local or not', () => {
+    const { spoken } = installSpeech([
+      voice('en-US', true, 'Samantha'),
+      voice('en-GB', false, 'Daniel'),
+    ])
+
+    speak('ubiquitous', { voiceURI: 'uri:Daniel' })
+
+    expect(spoken[0].voice?.name).toBe('Daniel')
+    expect(spoken[0].lang).toBe('en-GB')
+  })
+
+  it('ignores a chosen voice that is no longer installed', () => {
+    const { spoken } = installSpeech([voice('en-US', true, 'Samantha')])
+
+    speak('ubiquitous', { voiceURI: 'uri:Deleted' })
+
+    expect(spoken[0].voice?.name).toBe('Samantha')
+  })
+})
+
+describe('onVoicesChanged', () => {
+  it('calls back when the browser fills the list in', () => {
+    const { target } = installSpeech()
+    const listener = vi.fn()
+
+    onVoicesChanged(listener)
+    target.dispatchEvent(new Event('voiceschanged'))
+
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops calling back once unsubscribed', () => {
+    const { target } = installSpeech()
+    const listener = vi.fn()
+
+    onVoicesChanged(listener)()
+    target.dispatchEvent(new Event('voiceschanged'))
+
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('hands back a no-op unsubscribe when unsupported', () => {
+    expect(() => onVoicesChanged(vi.fn())()).not.toThrow()
   })
 })

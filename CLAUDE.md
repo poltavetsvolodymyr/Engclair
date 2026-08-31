@@ -118,7 +118,7 @@ earlier tests in the same file.
 │   ├── lib/                       Framework-free logic
 │   │   ├── sm2/                   The algorithm; pure, no React, no storage
 │   │   ├── storage/               localStorage load/save/clear of progress
-│   │   ├── speech/                Pronunciation via the browser's own voices
+│   │   ├── speech/                Pronunciation + which voice, via the browser
 │   │   ├── theme/                 Theme list + persistence  [TEMPORARY]
 │   │   └── review/                Grade -> SM-2 quality bridge
 │   ├── hooks/
@@ -134,6 +134,7 @@ earlier tests in the same file.
 │       ├── StatsBar/
 │       ├── Flashcard/
 │       ├── SpeakButton/           Icon button beside the term
+│       ├── VoicePicker/           Chooses the voice; hidden unless there are 2+
 │       ├── RevealButton/
 │       ├── GradeButtons/
 │       ├── SessionMessage/
@@ -177,6 +178,17 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   something is actually being spoken — cancelling an idle queue leaves iOS
   silent for every later utterance. A device without the API simply gets no
   button: `useSpeech` reports it and `App` then passes no `onSpeak`.
+- **Choosing the voice** (`lib/speech/voice-storage.ts`): which voice reads the
+  terms is the user's call, saved under `localStorage['engclair:voice:v1']` —
+  its own key, so resetting review progress cannot change how the app sounds.
+  The picker only appears when the device has two or more English voices: one
+  is not a choice. `listEnglishVoices` sorts on one key, installed before
+  remote, and stably, so the device's own order survives inside each group and
+  the first entry is exactly what plays when nothing has been chosen — list and
+  default can never disagree. A saved voice that has since been deleted from
+  the device falls back to that same first entry rather than going silent. The
+  list arrives asynchronously, so the hook also listens for `voiceschanged`;
+  reading it on first render alone returns an empty array.
 - **Offline** (`vite-plugin-pwa`, configured in `vite.config.ts`): the app is
   installable and runs with no network at all. Nothing is fetched at runtime —
   the deck is bundled and progress is local — so precaching the shell is enough
