@@ -112,26 +112,26 @@ describe('useSpeech', () => {
 
     const { result } = renderHook(() => useSpeech())
 
-    expect(result.current.speaking).toBe(false)
+    expect(result.current.speaking).toBeNull()
   })
 
   it('follows the utterance from start to end', () => {
     const { spoken } = installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous'))
+    act(() => result.current.speak('term', 'ubiquitous'))
     act(() => spoken[0].onstart?.())
-    expect(result.current.speaking).toBe(true)
+    expect(result.current.speaking).toBe('term')
 
     act(() => spoken[0].onend?.())
-    expect(result.current.speaking).toBe(false)
+    expect(result.current.speaking).toBeNull()
   })
 
   it('stops talking when the hook goes away', () => {
     const { synth } = installSpeech()
     const { result, unmount } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous'))
+    act(() => result.current.speak('term', 'ubiquitous'))
     unmount()
 
     expect(synth.cancel).toHaveBeenCalledTimes(1)
@@ -143,7 +143,7 @@ describe('useSpeech with a recorded clip', () => {
     const { synth } = installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous'))
+    act(() => result.current.speak('term', 'ubiquitous'))
 
     expect(synth.speak).toHaveBeenCalledTimes(1)
     expect(FakeAudio.instances).toHaveLength(0)
@@ -153,7 +153,7 @@ describe('useSpeech with a recorded clip', () => {
     const { synth } = installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+    act(() => result.current.speak('term', 'ubiquitous', 'ubiquitous.m4a'))
 
     expect(latestClip().src).toContain('audio/ubiquitous.m4a')
     expect(synth.speak).not.toHaveBeenCalled()
@@ -163,19 +163,19 @@ describe('useSpeech with a recorded clip', () => {
     installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+    act(() => result.current.speak('term', 'ubiquitous', 'ubiquitous.m4a'))
     act(() => latestClip().onplaying?.())
-    expect(result.current.speaking).toBe(true)
+    expect(result.current.speaking).toBe('term')
 
     act(() => latestClip().onended?.())
-    expect(result.current.speaking).toBe(false)
+    expect(result.current.speaking).toBeNull()
   })
 
   it('speaks the word when its recording will not play', () => {
     const { synth } = installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous', 'missing.m4a'))
+    act(() => result.current.speak('term', 'ubiquitous', 'missing.m4a'))
     act(() => latestClip().onerror?.())
 
     expect(synth.speak).toHaveBeenCalledTimes(1)
@@ -185,10 +185,50 @@ describe('useSpeech with a recorded clip', () => {
     installSpeech()
     const { result, unmount } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('ubiquitous', 'ubiquitous.m4a'))
+    act(() => result.current.speak('term', 'ubiquitous', 'ubiquitous.m4a'))
     const clip = latestClip()
     unmount()
 
     expect(clip.pause).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('useSpeech across the two parts of a card', () => {
+  it('names the part it is reading, so only that button lights', () => {
+    const { spoken } = installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('definition', 'Present everywhere.'))
+    act(() => spoken[0].onstart?.())
+
+    expect(result.current.speaking).toBe('definition')
+  })
+
+  it('plays the definition its own recording', () => {
+    installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() =>
+      result.current.speak('definition', 'Present everywhere.', 'card-definition.mp3'),
+    )
+
+    expect(latestClip().src).toContain('audio/card-definition.mp3')
+  })
+
+  it('a part that has been replaced cannot put out the new one', () => {
+    // Starting the definition stops the term's clip, and the stopped clip may
+    // still report an end. Answering it would darken a button that is playing.
+    installSpeech()
+    const { result } = renderHook(() => useSpeech())
+
+    act(() => result.current.speak('term', 'ubiquitous', 'term.mp3'))
+    const term = latestClip()
+    act(() => term.onplaying?.())
+
+    act(() => result.current.speak('definition', 'Present everywhere.', 'def.mp3'))
+    act(() => latestClip().onplaying?.())
+    act(() => term.onended?.())
+
+    expect(result.current.speaking).toBe('definition')
   })
 })

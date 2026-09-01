@@ -108,6 +108,15 @@
   margin-top: 0;
 }
 
+/* Mirrors the term row above: the label says what follows, and the button at
+   the far end of the line reads it out. */
+.definitionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
 .definition {
   margin: 0;
   font-size: var(--text-lg);

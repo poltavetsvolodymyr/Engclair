@@ -19,6 +19,12 @@ export interface Card {
    * it cannot be played, so a card without one still speaks.
    */
   audio?: string
+  /**
+   * Optional recorded reading of the definition, in the same folder. Same
+   * bargain as `audio`: preferred when present, fallen back from when it will
+   * not play.
+   */
+  definitionAudio?: string
   /** Grammatical label, e.g. "adjective", "noun", "phrasal verb". */
   partOfSpeech: string
   /** English-only explanation shown on the back of the card. */

@@ -1,4 +1,4 @@
-import type { Card, FlashcardText } from '@/types'
+import type { Card, FlashcardText, SpokenPart } from '@/types'
 
 export interface FlashcardProps {
   card: Card
@@ -6,10 +6,10 @@ export interface FlashcardProps {
   /** When false only the prompt side is shown. */
   revealed: boolean
   /**
-   * Speaks the term. Omitted on a device without speech synthesis, which is
-   * how the button knows not to appear at all.
+   * Reads one part of the card aloud. Omitted on a device without speech
+   * synthesis, which is how the buttons know not to appear at all.
    */
-  onSpeak?: () => void
-  /** True while the term is being spoken. */
-  speaking?: boolean
+  onSpeak?: (part: SpokenPart) => void
+  /** Which part is being read, so only that button shows it. */
+  speaking?: SpokenPart | null
 }

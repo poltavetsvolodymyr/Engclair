@@ -1,8 +1,14 @@
+import type { SpokenPart } from '@/types'
+
 export interface SpeechControl {
-  /** False on a device with no speech synthesis; the button is then not shown. */
+  /** False on a device with no speech synthesis; the buttons are then hidden. */
   supported: boolean
-  /** True while a recording or an utterance is playing, for button feedback. */
-  speaking: boolean
+  /**
+   * Which part is being read right now, or null in silence. One value rather
+   * than a flag per button, because only one thing is ever heard at a time —
+   * starting the definition silences the term, and the state follows.
+   */
+  speaking: SpokenPart | null
   /** Plays `audio` from `public/audio/` when given, else speaks `text`. */
-  speak: (text: string, audio?: string) => void
+  speak: (part: SpokenPart, text: string, audio?: string) => void
 }
