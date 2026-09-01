@@ -50,7 +50,13 @@ export function App() {
                 ? (part) =>
                     part === 'term'
                       ? speech.speak(part, card.term, card.audio)
-                      : speech.speak(part, card.definition, card.definitionAudio)
+                      : speech.speak(
+                          part,
+                          // The recording reads both; the synthesiser falling
+                          // back for it should not read less.
+                          `${card.definition} ${card.example}`,
+                          card.answerAudio,
+                        )
                 : undefined
             }
           />

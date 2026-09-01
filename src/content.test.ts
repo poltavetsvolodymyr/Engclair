@@ -130,7 +130,7 @@ describe('recorded pronunciation', () => {
     (
       [
         [card.audio, `${card.id}.mp3`],
-        [card.definitionAudio, `${card.id}-definition.mp3`],
+        [card.answerAudio, `${card.id}-answer.mp3`],
       ] as const
     )
       .filter(([file]) => file)

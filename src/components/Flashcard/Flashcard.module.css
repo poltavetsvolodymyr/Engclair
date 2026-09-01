@@ -109,8 +109,8 @@
 }
 
 /* Mirrors the term row above: the label says what follows, and the button at
-   the far end of the line reads it out. */
-.definitionRow {
+   the far end of the line reads the answer out — definition, a beat, example. */
+.answerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;

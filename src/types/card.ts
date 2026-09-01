@@ -20,11 +20,11 @@ export interface Card {
    */
   audio?: string
   /**
-   * Optional recorded reading of the definition, in the same folder. Same
-   * bargain as `audio`: preferred when present, fallen back from when it will
-   * not play.
+   * Optional recorded reading of the answer — the definition, a beat, then the
+   * example — in the same folder. Same bargain as `audio`: preferred when
+   * present, fallen back from when it will not play.
    */
-  definitionAudio?: string
+  answerAudio?: string
   /** Grammatical label, e.g. "adjective", "noun", "phrasal verb". */
   partOfSpeech: string
   /** English-only explanation shown on the back of the card. */

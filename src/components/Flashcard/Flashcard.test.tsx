@@ -13,7 +13,7 @@ const card: Card = {
   category: 'vocabulary',
   term: 'ubiquitous',
   audio: 'vocab-example.mp3',
-  definitionAudio: 'vocab-example-definition.mp3',
+  answerAudio: 'vocab-example-answer.mp3',
   phonetic: '/juːˈbɪkwɪtəs/',
   partOfSpeech: 'adjective',
   definition: 'Seeming to be present everywhere at the same time.',
@@ -26,7 +26,7 @@ const text: FlashcardText = {
   definitionLabel: 'Definition',
   exampleLabel: 'Example',
   speakTerm: 'Hear pronunciation',
-  speakDefinition: 'Hear the definition read aloud',
+  speakAnswer: 'Hear the answer read aloud',
   categoryLabels: { 'vocabulary': 'Vocabulary', 'phrasal-verb': 'Phrasal verb' },
 }
 
@@ -40,20 +40,20 @@ function show(props: Partial<Parameters<typeof Flashcard>[0]> = {}) {
 }
 
 describe('Flashcard speaker buttons', () => {
-  it('offers the term and the definition separately', () => {
+  it('offers the term and the answer separately', () => {
     show()
 
     expect(screen.getByRole('button', { name: text.speakTerm })).toBeTruthy()
-    expect(screen.getByRole('button', { name: text.speakDefinition })).toBeTruthy()
+    expect(screen.getByRole('button', { name: text.speakAnswer })).toBeTruthy()
   })
 
   it('asks for the part whose button was pressed', () => {
     const onSpeak = show()
 
-    fireEvent.click(screen.getByRole('button', { name: text.speakDefinition }))
+    fireEvent.click(screen.getByRole('button', { name: text.speakAnswer }))
 
     expect(onSpeak).toHaveBeenCalledTimes(1)
-    expect(onSpeak).toHaveBeenCalledWith('definition')
+    expect(onSpeak).toHaveBeenCalledWith('answer')
   })
 
   it('keeps the term readable before the answer is revealed', () => {
@@ -62,18 +62,18 @@ describe('Flashcard speaker buttons', () => {
     // The word is the prompt, so it can always be heard; its meaning is the
     // answer, and offering to read that out would give it away.
     expect(screen.getByRole('button', { name: text.speakTerm })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: text.speakDefinition })).toBeNull()
+    expect(screen.queryByRole('button', { name: text.speakAnswer })).toBeNull()
     expect(onSpeak).not.toHaveBeenCalled()
   })
 
   it('marks only the part being read', () => {
-    show({ speaking: 'definition' })
+    show({ speaking: 'answer' })
 
     expect(
       screen.getByRole('button', { name: text.speakTerm }).dataset.speaking,
     ).toBeUndefined()
     expect(
-      screen.getByRole('button', { name: text.speakDefinition }).dataset.speaking,
+      screen.getByRole('button', { name: text.speakAnswer }).dataset.speaking,
     ).toBe('true')
   })
 

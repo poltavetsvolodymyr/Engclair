@@ -198,21 +198,21 @@ describe('useSpeech across the two parts of a card', () => {
     const { spoken } = installSpeech()
     const { result } = renderHook(() => useSpeech())
 
-    act(() => result.current.speak('definition', 'Present everywhere.'))
+    act(() => result.current.speak('answer', 'Present everywhere.'))
     act(() => spoken[0].onstart?.())
 
-    expect(result.current.speaking).toBe('definition')
+    expect(result.current.speaking).toBe('answer')
   })
 
-  it('plays the definition its own recording', () => {
+  it('plays the answer its own recording', () => {
     installSpeech()
     const { result } = renderHook(() => useSpeech())
 
     act(() =>
-      result.current.speak('definition', 'Present everywhere.', 'card-definition.mp3'),
+      result.current.speak('answer', 'Present everywhere.', 'card-answer.mp3'),
     )
 
-    expect(latestClip().src).toContain('audio/card-definition.mp3')
+    expect(latestClip().src).toContain('audio/card-answer.mp3')
   })
 
   it('a part that has been replaced cannot put out the new one', () => {
@@ -225,10 +225,10 @@ describe('useSpeech across the two parts of a card', () => {
     const term = latestClip()
     act(() => term.onplaying?.())
 
-    act(() => result.current.speak('definition', 'Present everywhere.', 'def.mp3'))
+    act(() => result.current.speak('answer', 'Present everywhere.', 'def.mp3'))
     act(() => latestClip().onplaying?.())
     act(() => term.onended?.())
 
-    expect(result.current.speaking).toBe('definition')
+    expect(result.current.speaking).toBe('answer')
   })
 })

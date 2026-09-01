@@ -29,8 +29,8 @@ export interface FlashcardText {
   exampleLabel: string
   /** Accessible name of the button beside the term; it shows only an icon. */
   speakTerm: string
-  /** Accessible name of the button beside the definition, likewise icon-only. */
-  speakDefinition: string
+  /** Accessible name of the button that reads the answer, likewise icon-only. */
+  speakAnswer: string
   categoryLabels: Record<CardCategory, string>
 }
 

@@ -27,7 +27,7 @@ export const content: Content = {
       definitionLabel: 'Definition',
       exampleLabel: 'Example',
       speakTerm: 'Hear pronunciation',
-      speakDefinition: 'Hear the definition read aloud',
+      speakAnswer: 'Hear the answer read aloud',
       categoryLabels: {
         'vocabulary': 'Vocabulary',
         'phrasal-verb': 'Phrasal verb',
@@ -78,8 +78,8 @@ export const content: Content = {
       phonetic: '/juːˈbɪkwɪtəs/',
       partOfSpeech: 'adjective',
       definition: 'Seeming to be present everywhere at the same time.',
-      definitionAudio: 'vocab-ubiquitous-definition.mp3',
       example: 'Smartphones have become ubiquitous in everyday life.',
+      answerAudio: 'vocab-ubiquitous-answer.mp3',
     },
     {
       id: 'vocab-meticulous',
@@ -89,8 +89,8 @@ export const content: Content = {
       phonetic: '/məˈtɪkjələs/',
       partOfSpeech: 'adjective',
       definition: 'Showing great attention to detail; very careful and precise.',
-      definitionAudio: 'vocab-meticulous-definition.mp3',
       example: 'She kept meticulous records of every expense.',
+      answerAudio: 'vocab-meticulous-answer.mp3',
     },
     {
       id: 'vocab-resilient',
@@ -100,8 +100,8 @@ export const content: Content = {
       phonetic: '/rɪˈzɪliənt/',
       partOfSpeech: 'adjective',
       definition: 'Able to recover quickly from difficulties or setbacks.',
-      definitionAudio: 'vocab-resilient-definition.mp3',
       example: 'The town proved resilient and rebuilt within a year of the flood.',
+      answerAudio: 'vocab-resilient-answer.mp3',
     },
     {
       id: 'vocab-candid',
@@ -111,8 +111,8 @@ export const content: Content = {
       phonetic: '/ˈkændɪd/',
       partOfSpeech: 'adjective',
       definition: 'Honest and direct, even when the truth is awkward.',
-      definitionAudio: 'vocab-candid-definition.mp3',
       example: 'In a candid interview, the director admitted her first film was weak.',
+      answerAudio: 'vocab-candid-answer.mp3',
     },
     {
       id: 'vocab-pragmatic',
@@ -122,8 +122,8 @@ export const content: Content = {
       phonetic: '/præɡˈmætɪk/',
       partOfSpeech: 'adjective',
       definition: 'Dealing with problems in a practical way rather than following fixed theories.',
-      definitionAudio: 'vocab-pragmatic-definition.mp3',
       example: 'We need a pragmatic plan that fits the budget we actually have.',
+      answerAudio: 'vocab-pragmatic-answer.mp3',
     },
     {
       id: 'vocab-alleviate',
@@ -133,8 +133,8 @@ export const content: Content = {
       phonetic: '/əˈliːvieɪt/',
       partOfSpeech: 'verb',
       definition: 'To make pain or a problem less severe.',
-      definitionAudio: 'vocab-alleviate-definition.mp3',
       example: 'The new bypass was built to alleviate traffic in the town centre.',
+      answerAudio: 'vocab-alleviate-answer.mp3',
     },
     {
       id: 'vocab-scrutiny',
@@ -144,8 +144,8 @@ export const content: Content = {
       phonetic: '/ˈskruːtəni/',
       partOfSpeech: 'noun',
       definition: 'Close and careful examination or inspection.',
-      definitionAudio: 'vocab-scrutiny-definition.mp3',
       example: 'The contract came under intense scrutiny from the lawyers.',
+      answerAudio: 'vocab-scrutiny-answer.mp3',
     },
     {
       id: 'vocab-tentative',
@@ -155,8 +155,8 @@ export const content: Content = {
       phonetic: '/ˈtentətɪv/',
       partOfSpeech: 'adjective',
       definition: 'Not certain or fixed; done with hesitation.',
-      definitionAudio: 'vocab-tentative-definition.mp3',
       example: 'We have a tentative agreement, but nothing has been signed.',
+      answerAudio: 'vocab-tentative-answer.mp3',
     },
     {
       id: 'vocab-inevitable',
@@ -166,8 +166,8 @@ export const content: Content = {
       phonetic: '/ɪnˈevɪtəbəl/',
       partOfSpeech: 'adjective',
       definition: 'Certain to happen and impossible to avoid.',
-      definitionAudio: 'vocab-inevitable-definition.mp3',
       example: 'After months without rain, water shortages were inevitable.',
+      answerAudio: 'vocab-inevitable-answer.mp3',
     },
     {
       id: 'vocab-profound',
@@ -177,8 +177,8 @@ export const content: Content = {
       phonetic: '/prəˈfaʊnd/',
       partOfSpeech: 'adjective',
       definition: 'Very great or intense; showing deep insight or understanding.',
-      definitionAudio: 'vocab-profound-definition.mp3',
       example: 'Her speech had a profound effect on everyone in the room.',
+      answerAudio: 'vocab-profound-answer.mp3',
     },
 
     // ── Phrasal verbs (10) ──────────────────────────────────────────
@@ -189,8 +189,8 @@ export const content: Content = {
       audio: 'phrasal-put-off.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To postpone something to a later time.',
-      definitionAudio: 'phrasal-put-off-definition.mp3',
       example: 'They put off the meeting until next week.',
+      answerAudio: 'phrasal-put-off-answer.mp3',
     },
     {
       id: 'phrasal-run-into',
@@ -199,8 +199,8 @@ export const content: Content = {
       audio: 'phrasal-run-into.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To meet someone unexpectedly.',
-      definitionAudio: 'phrasal-run-into-definition.mp3',
       example: 'I ran into an old colleague at the airport.',
+      answerAudio: 'phrasal-run-into-answer.mp3',
     },
     {
       id: 'phrasal-figure-out',
@@ -209,8 +209,8 @@ export const content: Content = {
       audio: 'phrasal-figure-out.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To understand or solve something after thinking about it.',
-      definitionAudio: 'phrasal-figure-out-definition.mp3',
       example: 'It took me a while to figure out how the software worked.',
+      answerAudio: 'phrasal-figure-out-answer.mp3',
     },
     {
       id: 'phrasal-give-up',
@@ -219,8 +219,8 @@ export const content: Content = {
       audio: 'phrasal-give-up.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To stop trying to do something.',
-      definitionAudio: 'phrasal-give-up-definition.mp3',
       example: 'She refused to give up after three failed attempts.',
+      answerAudio: 'phrasal-give-up-answer.mp3',
     },
     {
       id: 'phrasal-bring-up',
@@ -229,8 +229,8 @@ export const content: Content = {
       audio: 'phrasal-bring-up.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To mention or introduce a topic in conversation.',
-      definitionAudio: 'phrasal-bring-up-definition.mp3',
       example: 'He brought up the budget problem during lunch.',
+      answerAudio: 'phrasal-bring-up-answer.mp3',
     },
     {
       id: 'phrasal-carry-on',
@@ -239,8 +239,8 @@ export const content: Content = {
       audio: 'phrasal-carry-on.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To continue doing something.',
-      definitionAudio: 'phrasal-carry-on-definition.mp3',
       example: 'Please carry on with your work; I will wait.',
+      answerAudio: 'phrasal-carry-on-answer.mp3',
     },
     {
       id: 'phrasal-turn-down',
@@ -249,8 +249,8 @@ export const content: Content = {
       audio: 'phrasal-turn-down.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To reject or refuse an offer or request.',
-      definitionAudio: 'phrasal-turn-down-definition.mp3',
       example: 'They turned down the job because the salary was too low.',
+      answerAudio: 'phrasal-turn-down-answer.mp3',
     },
     {
       id: 'phrasal-come-across',
@@ -259,8 +259,8 @@ export const content: Content = {
       audio: 'phrasal-come-across.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To find something by chance.',
-      definitionAudio: 'phrasal-come-across-definition.mp3',
       example: 'I came across an old photo while cleaning the attic.',
+      answerAudio: 'phrasal-come-across-answer.mp3',
     },
     {
       id: 'phrasal-sort-out',
@@ -269,8 +269,8 @@ export const content: Content = {
       audio: 'phrasal-sort-out.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To organise something or resolve a problem.',
-      definitionAudio: 'phrasal-sort-out-definition.mp3',
       example: 'We need to sort out the schedule before Friday.',
+      answerAudio: 'phrasal-sort-out-answer.mp3',
     },
     {
       id: 'phrasal-look-forward-to',
@@ -279,8 +279,8 @@ export const content: Content = {
       audio: 'phrasal-look-forward-to.mp3',
       partOfSpeech: 'phrasal verb',
       definition: 'To feel pleased and excited about something that is going to happen.',
-      definitionAudio: 'phrasal-look-forward-to-definition.mp3',
       example: 'I am looking forward to the weekend.',
+      answerAudio: 'phrasal-look-forward-to-answer.mp3',
     },
   ],
 }

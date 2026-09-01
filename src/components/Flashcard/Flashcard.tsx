@@ -37,15 +37,17 @@ export function Flashcard({
       <div className={styles.body}>
         {revealed ? (
           <div className={styles.answer}>
-            {/* The definition gets its own button: hearing what a word means
-                said aloud is a different exercise from hearing the word. */}
-            <div className={styles.definitionRow}>
+            {/* The answer gets its own button: hearing what a word means said
+                aloud is a different exercise from hearing the word. It reads
+                the definition and then the example, so it sits at the top of
+                the answer rather than against either one. */}
+            <div className={styles.answerRow}>
               <p className={styles.sectionLabel}>{text.definitionLabel}</p>
               {onSpeak ? (
                 <SpeakButton
-                  label={text.speakDefinition}
-                  speaking={speaking === 'definition'}
-                  onClick={() => onSpeak('definition')}
+                  label={text.speakAnswer}
+                  speaking={speaking === 'answer'}
+                  onClick={() => onSpeak('answer')}
                 />
               ) : null}
             </div>

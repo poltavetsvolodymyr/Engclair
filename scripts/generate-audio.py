@@ -13,9 +13,9 @@ recorded ahead of time instead, and the deck carries the audio.
 To redo one card, delete its file from public/audio/ and run the script again.
 
 Writes two clips per card into public/audio/ — <card id>.mp3 for the term and
-<card id>-definition.mp3 for what it means — and points the matching card at
-each. Both the files and the edit are source assets: review the diff, then
-commit them.
+<card id>-answer.mp3 for its definition and example, a beat apart — and points
+the matching card at each. Both the files and the edit are source assets:
+review the diff, then commit them.
 
 The model is driven directly rather than through the piper command, because a
 few cards are recorded from phonemes and the command only takes letters.
@@ -102,8 +102,12 @@ class Override(NamedTuple):
     length_scale: Optional[float] = None
 
 
-# Keyed by card id, and they correct the *term* only: a definition is a
-# sentence, where a word out of place is carried by the ones around it.
+# Keyed by card id. A respelling follows its term into the example as well —
+# every example uses the word it teaches, and a card that says "rezilient" on
+# one button and "resilient" on the other teaches the mistake it was fixing.
+# Phonemes cannot travel that way, so a term corrected with them is corrected
+# on its own clip only; the glide they fix is a blemish inside a sentence
+# rather than the wrong consonant.
 OVERRIDES = {
     # espeak said ɹᵻsˈɪliənt; the word takes a z, not an s.
     'vocab-resilient': Override(respelling='rezilient'),
@@ -114,8 +118,13 @@ OVERRIDES = {
 # Punctuation espeak already reads as the end of a sentence.
 SENTENCE_END = ('.', '!', '?')
 
-# What the definition's clip is called, next to the term's own file.
-DEFINITION_SUFFIX = '-definition'
+# The answer is read as one clip with a beat between its two halves, rather
+# than two clips the app has to sequence: one file, one fetch, one play, and
+# the pause is heard the same offline as on.
+PAUSE_SECONDS = 0.6
+
+# What the answer's clip is called, next to the term's own file.
+ANSWER_SUFFIX = '-answer'
 
 # MP3 rather than the better-per-bit AAC: open-source Chromium builds ship no
 # AAC decoder, and a clip that will not decode falls back to the very voice the
@@ -169,15 +178,16 @@ def ffmpeg() -> str:
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
-def read_cards(source: str) -> list[tuple[str, str, str]]:
-    """Every card's id, term and definition, straight out of the authored deck.
+def read_cards(source: str) -> list[tuple[str, str, str, str]]:
+    """Every card's id, term, definition and example, out of the authored deck.
 
     A regex rather than a parser: content.ts is written by hand in one shape,
     and the count check below fails loudly if that ever stops being true.
     """
     cards = re.findall(
         r"\bid: '([^']+)',[\s\S]{0,400}?\bterm: '([^']+)',"
-        r"[\s\S]{0,400}?\bdefinition: '([^']+)',",
+        r"[\s\S]{0,400}?\bdefinition: '([^']+)',"
+        r"[\s\S]{0,400}?\bexample: '([^']+)',",
         source,
     )
     declared = len(re.findall(r"^ {6}id: '", source, re.MULTILINE))
@@ -202,30 +212,62 @@ def link_card(source: str, card_id: str, field: str, after: str, file_name: str)
     return pattern.sub(rf"\g<1>      {field}: '{file_name}',\n", source, count=1)
 
 
-def record(voice, term: str, override: Override, target: Path, convert: str) -> str:
-    """Speak one term into an MP3, and report what was actually said."""
-    import numpy as np
+def respell(sentence: str, term: str, respelling: str) -> str:
+    """The sentence with the card's term swapped for the spelling espeak reads.
+
+    Every example uses the word it teaches, so a respelling that stopped at the
+    term would have the card saying "rezilient" on one button and "resilient"
+    on the other.
+    """
+    if not respelling:
+        return sentence
+    return re.sub(rf'\b{re.escape(term)}\b', respelling, sentence, flags=re.I)
+
+
+def say(voice, text: str, phonemes: str, length_scale: float) -> tuple:
+    """One utterance, and the phonemes it was sung from."""
     from piper.config import SynthesisConfig
 
-    if override.phonemes:
-        phonemes = list(override.phonemes)
+    if phonemes:
+        sung = list(phonemes)
     else:
         # The full stop matters: given a bare word the model has no sentence to
         # end and clips the last syllable short. Only where one is missing,
-        # though — a definition brings its own, and doubling it leaves espeak
+        # though — a sentence brings its own, and doubling it leaves espeak
         # holding a stray period that it reads out as the word "dot" at the
         # start of whatever is phonemised next.
-        said = override.respelling or term
-        phonemes = voice.phonemize(said if said.endswith(SENTENCE_END) else f'{said}.')[0]
+        sung = voice.phonemize(text if text.endswith(SENTENCE_END) else f'{text}.')[0]
 
     audio = voice.phoneme_ids_to_audio(
-        voice.phonemes_to_ids(phonemes),
+        voice.phonemes_to_ids(sung),
         syn_config=SynthesisConfig(
             speaker_id=SPEAKER,
-            length_scale=override.length_scale or LENGTH_SCALE,
+            length_scale=length_scale,
             noise_w_scale=NOISE_W_SCALE,
         ),
     )
+    return audio, ''.join(sung)
+
+
+def record(voice, take, target: Path, convert: str, length_scale: float) -> str:
+    """Speak a take into an MP3, a beat between its parts, and report the sound.
+
+    A take is one or more (text, phonemes) pairs: the term is one, the answer
+    is its definition and its example with a pause between them.
+    """
+    import numpy as np
+
+    pieces, spoken = [], []
+    for index, (text, phonemes) in enumerate(take):
+        if index:
+            pieces.append(
+                np.zeros(int(PAUSE_SECONDS * voice.config.sample_rate), dtype=np.float32)
+            )
+        piece, sung = say(voice, text, phonemes, length_scale)
+        pieces.append(piece)
+        spoken.append(sung)
+
+    audio = np.concatenate(pieces)
     # Normalise to the peak, which is what piper's own command does; without it
     # a clip lands quieter than the rest of the deck.
     audio = audio / max(float(np.abs(audio).max()), 1e-8)
@@ -243,7 +285,7 @@ def record(voice, term: str, override: Override, target: Path, convert: str) -> 
         check=True,
     )
     raw.unlink()
-    return ''.join(phonemes)
+    return ' ⏸ '.join(spoken)
 
 
 def main() -> None:
@@ -255,7 +297,7 @@ def main() -> None:
     source = CONTENT.read_text(encoding='utf-8')
     cards = read_cards(source)
 
-    stale = sorted(set(OVERRIDES) - {card_id for card_id, _, _ in cards})
+    stale = sorted(set(OVERRIDES) - {card_id for card_id, *_ in cards})
     if stale:
         sys.exit(f'OVERRIDES names cards the deck does not have: {stale}')
     both = sorted(k for k, o in OVERRIDES.items() if o.respelling and o.phonemes)
@@ -273,19 +315,26 @@ def main() -> None:
     updated = source
     recorded = 0
 
-    for card_id, term, definition in cards:
-        # Two clips per card, and the same rules for both: the term with
-        # whatever override it has, the definition as plainly written.
+    for card_id, term, definition, example in cards:
+        override = OVERRIDES.get(card_id, Override())
+        answer = [
+            (respell(definition, term, override.respelling), ''),
+            (respell(example, term, override.respelling), ''),
+        ]
+
+        # Two clips per card: the word, and the answer to the card — its
+        # definition and its example, a beat apart.
         takes = (
-            (f'{card_id}.{EXTENSION}', term, OVERRIDES.get(card_id, Override()),
-             'audio', 'term'),
-            (f'{card_id}{DEFINITION_SUFFIX}.{EXTENSION}', definition, Override(),
-             'definitionAudio', 'definition'),
+            (f'{card_id}.{EXTENSION}', 'audio', 'term', term,
+             [(override.respelling or term, override.phonemes)],
+             override.length_scale or LENGTH_SCALE),
+            (f'{card_id}{ANSWER_SUFFIX}.{EXTENSION}', 'answerAudio', 'example',
+             definition, answer, LENGTH_SCALE),
         )
 
-        for file_name, text, override, field, after in takes:
+        for file_name, field, after, label, take, length_scale in takes:
             target = AUDIO_DIR / file_name
-            shown = text if len(text) <= 34 else f'{text[:33]}…'
+            shown = label if len(label) <= 34 else f'{label[:33]}…'
 
             if target.exists() and not args.force:
                 print(f'  skip    {shown}')
@@ -293,8 +342,8 @@ def main() -> None:
                 print(f'  would record  {shown} -> {file_name}')
                 recorded += 1
             else:
-                spoken = record(voice, text, override, target, convert)
-                note = f'  [{spoken}]' if override != Override() else ''
+                spoken = record(voice, take, target, convert, length_scale)
+                note = f'  [{spoken}]' if card_id in OVERRIDES else ''
                 print(
                     f'  record  {shown} -> {file_name} '
                     f'({target.stat().st_size // 1024} KB){note}'
