@@ -68,10 +68,15 @@ VOICE_URL = (
 # of the waveform.
 NOISE_W_SCALE = 0.0
 
-# The deck is read a little slower than the model's own pace: these are
-# recordings to learn a word from, not to be talked at. An override may go
-# slower still, never faster.
+# The deck is read slower than the model's own pace: these are recordings to
+# learn a word from, not to be talked at. An override may go slower still,
+# never faster.
 LENGTH_SCALE = 1.2
+
+# The answer is slower again. A term is one word and you already know what is
+# coming; a definition and an example are sentences met for the first time, and
+# the ear needs longer with them than with the word they explain.
+ANSWER_LENGTH_SCALE = 1.4
 
 
 class Override(NamedTuple):
@@ -329,7 +334,7 @@ def main() -> None:
              [(override.respelling or term, override.phonemes)],
              override.length_scale or LENGTH_SCALE),
             (f'{card_id}{ANSWER_SUFFIX}.{EXTENSION}', 'answerAudio', 'example',
-             definition, answer, LENGTH_SCALE),
+             definition, answer, ANSWER_LENGTH_SCALE),
         )
 
         for file_name, field, after, label, take, length_scale in takes:

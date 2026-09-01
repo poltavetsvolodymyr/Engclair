@@ -250,7 +250,10 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   intonation in exactly that variation — with it pinned the readings came out
   robotic. So it is left free, and reproducibility here means timing, not bytes.
   The deck is also read slower than the model's own pace (`LENGTH_SCALE`):
-  these are recordings to learn a word from, not to be talked at.
+  these are recordings to learn a word from, not to be talked at. The answer is
+  slower again (`ANSWER_LENGTH_SCALE`) — a term is one word you are already
+  expecting, while its definition and example are sentences met for the first
+  time.
   The model is driven directly rather than through the `piper` command, because
   the command takes only letters and some cards are recorded from phonemes.
   To redo one card, delete its file from `public/audio/` and run the script.
