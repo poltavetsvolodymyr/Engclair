@@ -105,6 +105,9 @@ OVERRIDES = {
     'vocab-alleviate': Override(phonemes='ɐlˈiːviˌeɪt.', length_scale=1.3),
 }
 
+# Punctuation espeak already reads as the end of a sentence.
+SENTENCE_END = ('.', '!', '?')
+
 # What the definition's clip is called, next to the term's own file.
 DEFINITION_SUFFIX = '-definition'
 
@@ -202,8 +205,12 @@ def record(voice, term: str, override: Override, target: Path, convert: str) -> 
         phonemes = list(override.phonemes)
     else:
         # The full stop matters: given a bare word the model has no sentence to
-        # end and clips the last syllable short.
-        phonemes = voice.phonemize(f'{override.respelling or term}.')[0]
+        # end and clips the last syllable short. Only where one is missing,
+        # though — a definition brings its own, and doubling it leaves espeak
+        # holding a stray period that it reads out as the word "dot" at the
+        # start of whatever is phonemised next.
+        said = override.respelling or term
+        phonemes = voice.phonemize(said if said.endswith(SENTENCE_END) else f'{said}.')[0]
 
     audio = voice.phoneme_ids_to_audio(
         voice.phonemes_to_ids(phonemes),

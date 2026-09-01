@@ -200,8 +200,11 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   model in that release, and that is why it wins: the single-speaker American
   voices mispronounce words outright — `ryan-high` reads "candid" closer to
   "kentar" — which no setting can fix, whereas 904 speakers give somewhere to
-  go. Each term is synthesised with a full stop after it; given a bare word the
-  model has no sentence to end and clips the last syllable. ffmpeg arrives as a binary
+  go. A term is synthesised with a full stop after it; given a bare word the
+  model has no sentence to end and clips the last syllable. Only where one is
+  missing, though: a definition brings its own, and doubling it leaves espeak
+  holding a stray period, which it then reads out as the word "dot" at the
+  start of whatever is phonemised next. ffmpeg arrives as a binary
   inside the pip package, so nothing has to be installed system-wide. The
   script records two clips per card — the term as `<card id>.mp3` and its
   definition as `<card id>-definition.mp3` — encodes them, and adds `audio:`
