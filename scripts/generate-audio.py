@@ -50,16 +50,20 @@ VOICE_URL = (
     f'voice-{VOICE}.tar.gz'
 )
 
-# The model jitters the length of every phoneme it speaks, so the same word
-# recorded twice came out anywhere from 0.85 to 1.04 seconds. That turns any
-# comparison between two settings into a coin toss — you cannot tell the change
-# from the take. Pinned at zero, a term's timing is the same every run.
+# The model improvises twice over: the length of every phoneme it speaks, and
+# the grain of the voice speaking it. Left free, the same word recorded twice
+# ran anywhere from 0.85 to 1.04 seconds and never twice the same waveform,
+# which quietly turns every comparison between two settings into a coin toss —
+# you cannot tell the change from the take.
 #
-# What still varies run to run is the grain of the voice, which rides on a
-# second knob (noise_scale). Pinning that one too makes the recording identical
-# byte for byte, at the cost of the flatter delivery a model gives with no
-# variation left in it, so it is left alone.
+# Both pinned at zero, a term recorded today and recorded next year are the
+# same file, byte for byte. The clips stay committed, since they are what ships
+# and nothing should need a 120 MB model to serve the app, but they are no
+# longer irreplaceable: the script can make them again exactly. The flatter
+# delivery this costs was compared against a free take by ear and judged no
+# worse.
 NOISE_W_SCALE = 0.0
+NOISE_SCALE = 0.0
 
 
 class Override(NamedTuple):
@@ -190,6 +194,7 @@ def record(voice, term: str, override: Override, target: Path, convert: str) -> 
         syn_config=SynthesisConfig(
             speaker_id=SPEAKER,
             length_scale=override.length_scale,
+            noise_scale=NOISE_SCALE,
             noise_w_scale=NOISE_W_SCALE,
         ),
     )

@@ -216,12 +216,15 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   it, so "alleviate" came out `ɐlˈiːvɪʲˌeɪt`, and all thirty respellings that
   kept its four syllables kept the glide too. An override may also slow the
   delivery (`length_scale`), which is usually what a mushy ending needs.
-  **Recordings are reproducible**: the model jitters every phoneme's length, so
-  the same word twice ran anywhere from 0.85 to 1.04 seconds and no comparison
-  between two settings meant anything — you could not tell the change from the
-  take. `NOISE_W_SCALE = 0` pins it. The grain of the voice still varies run to
-  run on a second knob, `noise_scale`; pinning that too makes a clip identical
-  byte for byte but flattens the delivery, so it is deliberately left alone.
+  **Recordings are reproducible, byte for byte.** The model improvises twice
+  over — the length of every phoneme and the grain of the voice — so the same
+  word twice ran anywhere from 0.85 to 1.04 seconds and never the same waveform,
+  and no comparison between two settings meant anything, because you could not
+  tell the change from the take. `NOISE_W_SCALE` and `NOISE_SCALE` pin both at
+  zero. The clips stay committed, since they are what ships and serving the app
+  should never need a 120 MB model, but they are no longer irreplaceable: run
+  the script and the same twenty files come back. The flatter delivery this
+  costs was compared against a free take by ear and judged no worse.
   The model is driven directly rather than through the `piper` command, because
   the command takes only letters and some cards are recorded from phonemes.
   To redo one card, delete its file from `public/audio/` and run the script.
