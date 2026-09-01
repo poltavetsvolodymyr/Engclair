@@ -12,8 +12,10 @@ recorded ahead of time instead, and the deck carries the audio.
 
 To redo one card, delete its file from public/audio/ and run the script again.
 
-Writes public/audio/<card id>.mp3 and adds `audio:` to the matching card in
-src/content.ts. Both are source assets: review the diff, then commit them.
+Writes two clips per card into public/audio/ — <card id>.mp3 for the term and
+<card id>-definition.mp3 for what it means — and points the matching card at
+each. Both the files and the edit are source assets: review the diff, then
+commit them.
 
 The model is driven directly rather than through the piper command, because a
 few cards are recorded from phonemes and the command only takes letters.
@@ -94,12 +96,17 @@ class Override(NamedTuple):
     length_scale: Optional[float] = None
 
 
+# Keyed by card id, and they correct the *term* only: a definition is a
+# sentence, where a word out of place is carried by the ones around it.
 OVERRIDES = {
     # espeak said ɹᵻsˈɪliənt; the word takes a z, not an s.
     'vocab-resilient': Override(respelling='rezilient'),
     # espeak said ɐlˈiːvɪʲˌeɪt, which lands as "-i-yate".
     'vocab-alleviate': Override(phonemes='ɐlˈiːviˌeɪt.', length_scale=1.3),
 }
+
+# What the definition's clip is called, next to the term's own file.
+DEFINITION_SUFFIX = '-definition'
 
 # MP3 rather than the better-per-bit AAC: open-source Chromium builds ship no
 # AAC decoder, and a clip that will not decode falls back to the very voice the
@@ -153,13 +160,17 @@ def ffmpeg() -> str:
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
-def read_cards(source: str) -> list[tuple[str, str]]:
-    """Every card's id and term, straight out of the authored deck.
+def read_cards(source: str) -> list[tuple[str, str, str]]:
+    """Every card's id, term and definition, straight out of the authored deck.
 
     A regex rather than a parser: content.ts is written by hand in one shape,
     and the count check below fails loudly if that ever stops being true.
     """
-    cards = re.findall(r"\bid: '([^']+)',[\s\S]{0,400}?\bterm: '([^']+)',", source)
+    cards = re.findall(
+        r"\bid: '([^']+)',[\s\S]{0,400}?\bterm: '([^']+)',"
+        r"[\s\S]{0,400}?\bdefinition: '([^']+)',",
+        source,
+    )
     declared = len(re.findall(r"^ {6}id: '", source, re.MULTILINE))
     if len(cards) != declared:
         sys.exit(
@@ -169,12 +180,17 @@ def read_cards(source: str) -> list[tuple[str, str]]:
     return cards
 
 
-def link_card(source: str, card_id: str, file_name: str) -> str:
-    """Point a card at its recording, unless it already has one."""
+def link_card(source: str, card_id: str, field: str, after: str, file_name: str) -> str:
+    """Point a card's `field` at its recording, unless it already has one.
+
+    The clip is named after what it reads, so it lands right below it: `audio`
+    under the term, `definitionAudio` under the definition.
+    """
     pattern = re.compile(
-        rf"(id: '{re.escape(card_id)}',[\s\S]{{0,400}}?term: '[^']+',\n)(?! *audio:)"
+        rf"(id: '{re.escape(card_id)}',[\s\S]{{0,400}}?{after}: '[^']+',\n)"
+        rf"(?! *{field}:)"
     )
-    return pattern.sub(rf"\g<1>      audio: '{file_name}',\n", source, count=1)
+    return pattern.sub(rf"\g<1>      {field}: '{file_name}',\n", source, count=1)
 
 
 def record(voice, term: str, override: Override, target: Path, convert: str) -> str:
@@ -227,7 +243,7 @@ def main() -> None:
     source = CONTENT.read_text(encoding='utf-8')
     cards = read_cards(source)
 
-    stale = sorted(set(OVERRIDES) - {card_id for card_id, _ in cards})
+    stale = sorted(set(OVERRIDES) - {card_id for card_id, _, _ in cards})
     if stale:
         sys.exit(f'OVERRIDES names cards the deck does not have: {stale}')
     both = sorted(k for k, o in OVERRIDES.items() if o.respelling and o.phonemes)
@@ -245,26 +261,35 @@ def main() -> None:
     updated = source
     recorded = 0
 
-    for card_id, term in cards:
-        file_name = f'{card_id}.{EXTENSION}'
-        target = AUDIO_DIR / file_name
-        override = OVERRIDES.get(card_id, Override())
+    for card_id, term, definition in cards:
+        # Two clips per card, and the same rules for both: the term with
+        # whatever override it has, the definition as plainly written.
+        takes = (
+            (f'{card_id}.{EXTENSION}', term, OVERRIDES.get(card_id, Override()),
+             'audio', 'term'),
+            (f'{card_id}{DEFINITION_SUFFIX}.{EXTENSION}', definition, Override(),
+             'definitionAudio', 'definition'),
+        )
 
-        if target.exists() and not args.force:
-            print(f'  skip    {term}')
-        elif args.dry_run:
-            print(f'  would record  {term} -> {file_name}')
-            recorded += 1
-        else:
-            spoken = record(voice, term, override, target, convert)
-            note = f'  [{spoken}]' if card_id in OVERRIDES else ''
-            print(
-                f'  record  {term} -> {file_name} '
-                f'({target.stat().st_size // 1024} KB){note}'
-            )
-            recorded += 1
+        for file_name, text, override, field, after in takes:
+            target = AUDIO_DIR / file_name
+            shown = text if len(text) <= 34 else f'{text[:33]}…'
 
-        updated = link_card(updated, card_id, file_name)
+            if target.exists() and not args.force:
+                print(f'  skip    {shown}')
+            elif args.dry_run:
+                print(f'  would record  {shown} -> {file_name}')
+                recorded += 1
+            else:
+                spoken = record(voice, text, override, target, convert)
+                note = f'  [{spoken}]' if override != Override() else ''
+                print(
+                    f'  record  {shown} -> {file_name} '
+                    f'({target.stat().st_size // 1024} KB){note}'
+                )
+                recorded += 1
+
+            updated = link_card(updated, card_id, field, after, file_name)
 
     if not args.dry_run and updated != source:
         CONTENT.write_text(updated, encoding='utf-8')

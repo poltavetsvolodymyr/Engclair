@@ -46,7 +46,12 @@ export function App() {
             revealed={session.revealed}
             speaking={speech.speaking}
             onSpeak={
-              speech.supported ? () => speech.speak(card.term, card.audio) : undefined
+              speech.supported
+                ? (part) =>
+                    part === 'term'
+                      ? speech.speak(part, card.term, card.audio)
+                      : speech.speak(part, card.definition, card.definitionAudio)
+                : undefined
             }
           />
         ) : (

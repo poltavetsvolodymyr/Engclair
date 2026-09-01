@@ -8,7 +8,7 @@ export function Flashcard({
   text,
   revealed,
   onSpeak,
-  speaking = false,
+  speaking = null,
 }: FlashcardProps) {
   return (
     <section className={styles.card} aria-live="polite">
@@ -20,7 +20,11 @@ export function Flashcard({
           <div className={styles.termRow}>
             <h2 className={styles.term}>{card.term}</h2>
             {onSpeak ? (
-              <SpeakButton label={text.speak} speaking={speaking} onClick={onSpeak} />
+              <SpeakButton
+                label={text.speakTerm}
+                speaking={speaking === 'term'}
+                onClick={() => onSpeak('term')}
+              />
             ) : null}
           </div>
           {card.phonetic ? (
@@ -33,7 +37,18 @@ export function Flashcard({
       <div className={styles.body}>
         {revealed ? (
           <div className={styles.answer}>
-            <p className={styles.sectionLabel}>{text.definitionLabel}</p>
+            {/* The definition gets its own button: hearing what a word means
+                said aloud is a different exercise from hearing the word. */}
+            <div className={styles.definitionRow}>
+              <p className={styles.sectionLabel}>{text.definitionLabel}</p>
+              {onSpeak ? (
+                <SpeakButton
+                  label={text.speakDefinition}
+                  speaking={speaking === 'definition'}
+                  onClick={() => onSpeak('definition')}
+                />
+              ) : null}
+            </div>
             <p className={styles.definition}>{card.definition}</p>
             <p className={styles.sectionLabel}>{text.exampleLabel}</p>
             <p className={styles.example}>{card.example}</p>

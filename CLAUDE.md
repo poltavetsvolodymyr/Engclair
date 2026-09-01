@@ -98,7 +98,7 @@ earlier tests in the same file.
 │   └── generate-audio.py          Records the deck with a neural voice
 ├── public/
 │   ├── favicon.svg                The mark; the only source of the icons
-│   ├── audio/                     One recording per card  [generated]
+│   ├── audio/                     Term and definition per card  [generated]
 │   ├── icon-192.png               Manifest icons  [generated]
 │   ├── icon-512.png                               [generated]
 │   ├── icon-maskable-512.png      Safe-zone variant for launchers [generated]
@@ -137,7 +137,7 @@ earlier tests in the same file.
 │       ├── Header/
 │       ├── StatsBar/
 │       ├── Flashcard/
-│       ├── SpeakButton/           Icon button beside the term
+│       ├── SpeakButton/           Icon button; one per spoken part
 │       ├── RevealButton/
 │       ├── GradeButtons/
 │       ├── SessionMessage/
@@ -175,11 +175,19 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   to `localStorage['engclair:progress:v1']` after every grade. All access is
   try/caught, so private mode or a full quota just behaves like a fresh start.
   Bump the key suffix if the state shape ever changes.
-- **Pronunciation** is two sources with one button. A card may carry a recorded
-  clip (`audio` in `types/card.ts`, a file in `public/audio/`); when it does,
-  `lib/audio` plays it, and the synthesiser below is the fallback for
-  everything else. A clip that will not play — missing, undecodable, blocked —
-  falls back too, so the button always makes a sound. A failure arrives twice
+- **Two things can be heard, and each has its own button**: the term, beside
+  the word itself, and its definition, on the label above it. Hearing a word
+  and hearing what it means are different exercises, and one button could only
+  do one of them. The definition's button appears with the answer — offering to
+  read the meaning aloud before the answer is revealed would give it away. Which
+  part is playing is one value (`SpokenPart | null` from `useSpeech`) rather
+  than a flag per button, because only one thing is ever heard at a time:
+  starting the definition silences the term, and the state follows.
+- **Pronunciation** is two sources behind those buttons. A card may carry
+  recorded clips (`audio` and `definitionAudio` in `types/card.ts`, files in
+  `public/audio/`); when it does, `lib/audio` plays them, and the synthesiser
+  below is the fallback for everything else. A clip that will not play — missing, undecodable, blocked —
+  falls back too, so a button always makes a sound. A failure arrives twice
   over, as the element's `error` event *and* a rejected `play()` promise, so a
   clip settles exactly once; counting both made the app speak the word twice.
   Clips are precached with the shell (`globPatterns` in `vite.config.ts`) or
@@ -195,17 +203,21 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   go. Each term is synthesised with a full stop after it; given a bare word the
   model has no sentence to end and clips the last syllable. ffmpeg arrives as a binary
   inside the pip package, so nothing has to be installed system-wide. The
-  script records every term, encodes, and adds `audio:` to each card — the
+  script records two clips per card — the term as `<card id>.mp3` and its
+  definition as `<card id>-definition.mp3` — encodes them, and adds `audio:`
+  and `definitionAudio:` to the card, each directly under what it reads. The
   files and the edit are both source, to be reviewed and committed.
   **MP3, not AAC**: open-source Chromium builds ship no AAC decoder, and a clip
   that will not decode falls back to the very voice the recording exists to
-  replace. The whole deck costs about 120 KB.
-  `src/content.test.ts` checks that every card claiming a recording has one on
-  disk and that its name matches the card id, so the deck and the folder cannot
-  drift apart.
+  replace. The whole deck costs about 500 KB — a quarter of it the twenty
+  terms, the rest the twenty definitions, which are sentences.
+  `src/content.test.ts` checks that every clip a card claims exists on disk,
+  that its name matches the card id, and that no file in the folder is claimed
+  by nobody — so the deck and the folder cannot drift apart in either direction.
   **When espeak reads a word wrong**, the card gets an entry in `OVERRIDES` in
-  that script — piper never sees letters, espeak turns them into phonemes
-  first, and it read "resilient" with an s where the word takes a z. The card
+  that script — it corrects the term only, since a definition is a sentence
+  where a word out of place is carried by the ones around it. Piper never sees
+  letters, espeak turns them into phonemes first, and it read "resilient" with an s where the word takes a z. The card
   keeps the real term; only the synthesiser is handed something else. Two kinds,
   and the first is preferred: a **respelling** (`rezilient`), which is spelling
   and not phonetic notation, so the fix cannot invent a sound of its own on the

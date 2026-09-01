@@ -1,7 +1,7 @@
 /// <reference types="node" />
 // Referenced here rather than in tsconfig.app.json's `types`: this one suite
 // reads the filesystem, and the app itself must stay unable to.
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
@@ -125,21 +125,39 @@ describe('English-only rule', () => {
 })
 
 describe('recorded pronunciation', () => {
+  /** Every clip a card claims, with the name it is expected to carry. */
+  const claimed = content.cards.flatMap((card) =>
+    (
+      [
+        [card.audio, `${card.id}.mp3`],
+        [card.definitionAudio, `${card.id}-definition.mp3`],
+      ] as const
+    )
+      .filter(([file]) => file)
+      .map(([file, expected]) => ({ id: card.id, file: file as string, expected })),
+  )
+
   it('every card that claims a recording has one on disk', () => {
-    const missing = content.cards
-      .filter((card) => card.audio)
-      .filter((card) => !existsSync(join('public', 'audio', card.audio as string)))
-      .map((card) => card.id)
+    const missing = claimed
+      .filter((clip) => !existsSync(join('public', 'audio', clip.file)))
+      .map((clip) => clip.file)
 
     expect(missing).toEqual([])
   })
 
   it('names each recording after the card, so the two cannot drift apart', () => {
-    const mismatched = content.cards
-      .filter((card) => card.audio)
-      .filter((card) => card.audio !== `${card.id}.mp3`)
-      .map((card) => card.id)
+    const mismatched = claimed
+      .filter((clip) => clip.file !== clip.expected)
+      .map((clip) => clip.file)
 
     expect(mismatched).toEqual([])
+  })
+
+  it('leaves no clip in the folder that no card claims', () => {
+    const orphans = readdirSync(join('public', 'audio'))
+      .filter((file) => file.endsWith('.mp3'))
+      .filter((file) => !claimed.some((clip) => clip.file === file))
+
+    expect(orphans).toEqual([])
   })
 })
