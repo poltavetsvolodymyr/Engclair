@@ -10,6 +10,8 @@ recorded ahead of time instead, and the deck carries the audio.
     python3 scripts/generate-audio.py --force    # re-record everything
     python3 scripts/generate-audio.py --dry-run  # show the plan only
 
+To redo one card, delete its file from public/audio/ and run the script again.
+
 Writes public/audio/<card id>.mp3 and adds `audio:` to the matching card in
 src/content.ts. Both are source assets: review the diff, then commit them.
 
@@ -43,6 +45,29 @@ VOICE_URL = (
     'https://github.com/rhasspy/piper/releases/download/v0.0.2/'
     f'voice-{VOICE}.tar.gz'
 )
+
+# Piper does not read letters; espeak turns the term into phonemes first, and
+# on a few words espeak is simply wrong. Where it is, the clip is recorded from
+# a respelling — the card still shows the term, only the synthesiser is handed
+# something it reads correctly. Spelling, not phonetic notation: the whole point
+# is that no extra sound gets invented on the way in.
+#
+#   resilient   ɹᵻsˈɪliənt -> ɹᵻzˈɪliənt   the word takes a z, and espeak said s
+#
+# Check a candidate before trusting your ear, because most respellings change
+# nothing at all:
+#
+#   python3 -c "from piper.phonemize_espeak import EspeakPhonemizer as E; \
+#       print(''.join(E().phonemize('en-us', 'rezilient.')[0]))"
+#
+# What a respelling cannot fix is a sound espeak inserts by rule. It puts a
+# palatal glide between a high front vowel and the vowel after it — "alleviate"
+# comes out ɐlˈiːvɪʲˌeɪt — and every respelling that keeps the four syllables
+# keeps the glide with them. That one needs the phonemes edited directly, which
+# is a bigger machine than the deck has yet earned.
+RESPELLINGS = {
+    'vocab-resilient': 'rezilient',
+}
 
 # MP3 rather than the better-per-bit AAC: open-source Chromium builds ship no
 # AAC decoder, and a clip that will not decode falls back to the very voice the
@@ -119,6 +144,10 @@ def main() -> None:
 
     source = CONTENT.read_text(encoding='utf-8')
     cards = read_cards(source)
+
+    stale = sorted(set(RESPELLINGS) - {card_id for card_id, _ in cards})
+    if stale:
+        sys.exit(f'RESPELLINGS names cards the deck does not have: {stale}')
     print(
         f'{len(cards)} cards, voice "{VOICE}" speaker {SPEAKER}'
         f'{" (dry run)" if args.dry_run else ""}'
@@ -142,12 +171,13 @@ def main() -> None:
             recorded += 1
         else:
             raw = AUDIO_DIR / f'{card_id}.wav'
+            spoken = RESPELLINGS.get(card_id, term)
             subprocess.run(
                 [sys.executable, '-m', 'piper', '--model', str(model),
                  '--speaker', str(SPEAKER), '--output_file', str(raw)],
                 # The full stop matters: given a bare word the model has no
                 # sentence to end and clips the last syllable short.
-                input=f'{term}.', text=True, check=True, capture_output=True,
+                input=f'{spoken}.', text=True, check=True, capture_output=True,
             )
             subprocess.run(
                 [convert, '-y', '-loglevel', 'error', '-i', str(raw),
@@ -155,7 +185,11 @@ def main() -> None:
                 check=True,
             )
             raw.unlink()
-            print(f'  record  {term} -> {file_name} ({target.stat().st_size // 1024} KB)')
+            said = f' (said "{spoken}")' if spoken != term else ''
+            print(
+                f'  record  {term}{said} -> {file_name} '
+                f'({target.stat().st_size // 1024} KB)'
+            )
             recorded += 1
 
         updated = link_card(updated, card_id, file_name)

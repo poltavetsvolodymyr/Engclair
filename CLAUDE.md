@@ -203,6 +203,18 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   `src/content.test.ts` checks that every card claiming a recording has one on
   disk and that its name matches the card id, so the deck and the folder cannot
   drift apart.
+  **When espeak reads a word wrong**, the clip is recorded from a respelling
+  listed in `RESPELLINGS` in that script — piper never sees letters, espeak
+  turns them into phonemes first, and it read "resilient" with an s where the
+  word takes a z. The card keeps the real term; only the synthesiser is handed
+  the respelling. Spelling and not phonetic notation, so nothing extra gets
+  invented on the way in. Verify a candidate by phonemising it rather than by
+  ear — the script's comment carries the one-liner — because most respellings
+  change nothing. A sound espeak inserts *by rule* is out of reach this way: it
+  puts a palatal glide between a high front vowel and the vowel after it, so
+  "alleviate" is `ɐlˈiːvɪʲˌeɪt`, and every respelling keeping the four syllables
+  keeps the glide too.
+  To redo one card, delete its file from `public/audio/` and run the script.
 - **Speech synthesis** (`lib/speech/`): the fallback for a card with no
   recording — every card has one today, so it rarely speaks — through the
   browser's own `speechSynthesis`. No audio ships with the
