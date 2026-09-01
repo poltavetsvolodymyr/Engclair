@@ -203,17 +203,27 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   `src/content.test.ts` checks that every card claiming a recording has one on
   disk and that its name matches the card id, so the deck and the folder cannot
   drift apart.
-  **When espeak reads a word wrong**, the clip is recorded from a respelling
-  listed in `RESPELLINGS` in that script — piper never sees letters, espeak
-  turns them into phonemes first, and it read "resilient" with an s where the
-  word takes a z. The card keeps the real term; only the synthesiser is handed
-  the respelling. Spelling and not phonetic notation, so nothing extra gets
-  invented on the way in. Verify a candidate by phonemising it rather than by
-  ear — the script's comment carries the one-liner — because most respellings
-  change nothing. A sound espeak inserts *by rule* is out of reach this way: it
-  puts a palatal glide between a high front vowel and the vowel after it, so
-  "alleviate" is `ɐlˈiːvɪʲˌeɪt`, and every respelling keeping the four syllables
-  keeps the glide too.
+  **When espeak reads a word wrong**, the card gets an entry in `OVERRIDES` in
+  that script — piper never sees letters, espeak turns them into phonemes
+  first, and it read "resilient" with an s where the word takes a z. The card
+  keeps the real term; only the synthesiser is handed something else. Two kinds,
+  and the first is preferred: a **respelling** (`rezilient`), which is spelling
+  and not phonetic notation, so the fix cannot invent a sound of its own on the
+  way in. Verify one by phonemising it rather than by ear — the script's comment
+  carries the one-liner — because most respellings change nothing at all.
+  The second kind is **phonemes written out**, for what no spelling reaches:
+  espeak inserts a palatal glide between a high front vowel and the vowel after
+  it, so "alleviate" came out `ɐlˈiːvɪʲˌeɪt`, and all thirty respellings that
+  kept its four syllables kept the glide too. An override may also slow the
+  delivery (`length_scale`), which is usually what a mushy ending needs.
+  **Recordings are reproducible**: the model jitters every phoneme's length, so
+  the same word twice ran anywhere from 0.85 to 1.04 seconds and no comparison
+  between two settings meant anything — you could not tell the change from the
+  take. `NOISE_W_SCALE = 0` pins it. The grain of the voice still varies run to
+  run on a second knob, `noise_scale`; pinning that too makes a clip identical
+  byte for byte but flattens the delivery, so it is deliberately left alone.
+  The model is driven directly rather than through the `piper` command, because
+  the command takes only letters and some cards are recorded from phonemes.
   To redo one card, delete its file from `public/audio/` and run the script.
 - **Speech synthesis** (`lib/speech/`): the fallback for a card with no
   recording — every card has one today, so it rarely speaks — through the

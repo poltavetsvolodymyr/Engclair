@@ -15,6 +15,9 @@ To redo one card, delete its file from public/audio/ and run the script again.
 Writes public/audio/<card id>.mp3 and adds `audio:` to the matching card in
 src/content.ts. Both are source assets: review the diff, then commit them.
 
+The model is driven directly rather than through the piper command, because a
+few cards are recorded from phonemes and the command only takes letters.
+
 The voice model is ~120 MB and is *not* committed. It is downloaded once into
 .cache/ (git-ignored) from the piper release below, which mirrors the models
 otherwise hosted on Hugging Face.
@@ -22,12 +25,13 @@ otherwise hosted on Hugging Face.
 
 import argparse
 import re
-import shutil
 import subprocess
 import sys
 import tarfile
 import urllib.request
+import wave
 from pathlib import Path
+from typing import NamedTuple, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / 'src' / 'content.ts'
@@ -46,27 +50,51 @@ VOICE_URL = (
     f'voice-{VOICE}.tar.gz'
 )
 
-# Piper does not read letters; espeak turns the term into phonemes first, and
-# on a few words espeak is simply wrong. Where it is, the clip is recorded from
-# a respelling — the card still shows the term, only the synthesiser is handed
-# something it reads correctly. Spelling, not phonetic notation: the whole point
-# is that no extra sound gets invented on the way in.
+# The model jitters the length of every phoneme it speaks, so the same word
+# recorded twice came out anywhere from 0.85 to 1.04 seconds. That turns any
+# comparison between two settings into a coin toss — you cannot tell the change
+# from the take. Pinned at zero, a term's timing is the same every run.
 #
-#   resilient   ɹᵻsˈɪliənt -> ɹᵻzˈɪliənt   the word takes a z, and espeak said s
-#
-# Check a candidate before trusting your ear, because most respellings change
-# nothing at all:
-#
-#   python3 -c "from piper.phonemize_espeak import EspeakPhonemizer as E; \
-#       print(''.join(E().phonemize('en-us', 'rezilient.')[0]))"
-#
-# What a respelling cannot fix is a sound espeak inserts by rule. It puts a
-# palatal glide between a high front vowel and the vowel after it — "alleviate"
-# comes out ɐlˈiːvɪʲˌeɪt — and every respelling that keeps the four syllables
-# keeps the glide with them. That one needs the phonemes edited directly, which
-# is a bigger machine than the deck has yet earned.
-RESPELLINGS = {
-    'vocab-resilient': 'rezilient',
+# What still varies run to run is the grain of the voice, which rides on a
+# second knob (noise_scale). Pinning that one too makes the recording identical
+# byte for byte, at the cost of the flatter delivery a model gives with no
+# variation left in it, so it is left alone.
+NOISE_W_SCALE = 0.0
+
+
+class Override(NamedTuple):
+    """How one card departs from simply having its term read out.
+
+    Piper does not read letters: espeak turns the term into phonemes and the
+    model sings those. On a few words espeak is wrong, and this is where each
+    one is put right — the card still shows the term, only the synthesiser is
+    handed something else.
+    """
+
+    # Letters espeak reads correctly. Spelling rather than phonetic notation,
+    # so the fix cannot invent a sound of its own on the way in. Most
+    # respellings change nothing at all, so check one before trusting your ear:
+    #
+    #   python3 -c "from piper.phonemize_espeak import EspeakPhonemizer as E; \
+    #       print(''.join(E().phonemize('en-us', 'rezilient.')[0]))"
+    respelling: str = ''
+
+    # The phonemes themselves, for what no spelling can reach: espeak inserts a
+    # palatal glide between a high front vowel and the vowel after it, and all
+    # thirty respellings of "alleviate" that kept its four syllables kept the
+    # glide with them. Written out, the word is simply the dictionary's.
+    phonemes: str = ''
+
+    # Above 1.0 the delivery slows. A word whose ending arrives as mush is
+    # usually one the model is racing through.
+    length_scale: Optional[float] = None
+
+
+OVERRIDES = {
+    # espeak said ɹᵻsˈɪliənt; the word takes a z, not an s.
+    'vocab-resilient': Override(respelling='rezilient'),
+    # espeak said ɐlˈiːvɪʲˌeɪt, which lands as "-i-yate".
+    'vocab-alleviate': Override(phonemes='ɐlˈiːviˌeɪt.', length_scale=1.3),
 }
 
 # MP3 rather than the better-per-bit AAC: open-source Chromium builds ship no
@@ -103,6 +131,15 @@ def voice_model() -> Path:
     return model
 
 
+def load_voice():
+    """The loaded model, ready to speak."""
+    try:
+        from piper import PiperVoice
+    except ImportError:
+        sys.exit('Missing piper. Run: pip install piper-tts imageio-ffmpeg')
+    return PiperVoice.load(str(voice_model()))
+
+
 def ffmpeg() -> str:
     """The bundled ffmpeg binary, so nothing has to be installed system-wide."""
     try:
@@ -136,6 +173,46 @@ def link_card(source: str, card_id: str, file_name: str) -> str:
     return pattern.sub(rf"\g<1>      audio: '{file_name}',\n", source, count=1)
 
 
+def record(voice, term: str, override: Override, target: Path, convert: str) -> str:
+    """Speak one term into an MP3, and report what was actually said."""
+    import numpy as np
+    from piper.config import SynthesisConfig
+
+    if override.phonemes:
+        phonemes = list(override.phonemes)
+    else:
+        # The full stop matters: given a bare word the model has no sentence to
+        # end and clips the last syllable short.
+        phonemes = voice.phonemize(f'{override.respelling or term}.')[0]
+
+    audio = voice.phoneme_ids_to_audio(
+        voice.phonemes_to_ids(phonemes),
+        syn_config=SynthesisConfig(
+            speaker_id=SPEAKER,
+            length_scale=override.length_scale,
+            noise_w_scale=NOISE_W_SCALE,
+        ),
+    )
+    # Normalise to the peak, which is what piper's own command does; without it
+    # a clip lands quieter than the rest of the deck.
+    audio = audio / max(float(np.abs(audio).max()), 1e-8)
+    samples = (np.clip(audio, -1.0, 1.0) * 32767).astype('<i2')
+
+    raw = target.with_suffix('.wav')
+    with wave.open(str(raw), 'wb') as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(voice.config.sample_rate)
+        out.writeframes(samples.tobytes())
+    subprocess.run(
+        [convert, '-y', '-loglevel', 'error', '-i', str(raw),
+         '-c:a', CODEC, '-b:a', BITRATE, '-ac', '1', str(target)],
+        check=True,
+    )
+    raw.unlink()
+    return ''.join(phonemes)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--force', action='store_true', help='re-record existing clips')
@@ -145,16 +222,19 @@ def main() -> None:
     source = CONTENT.read_text(encoding='utf-8')
     cards = read_cards(source)
 
-    stale = sorted(set(RESPELLINGS) - {card_id for card_id, _ in cards})
+    stale = sorted(set(OVERRIDES) - {card_id for card_id, _ in cards})
     if stale:
-        sys.exit(f'RESPELLINGS names cards the deck does not have: {stale}')
+        sys.exit(f'OVERRIDES names cards the deck does not have: {stale}')
+    both = sorted(k for k, o in OVERRIDES.items() if o.respelling and o.phonemes)
+    if both:
+        sys.exit(f'An override is either letters or phonemes, not both: {both}')
     print(
         f'{len(cards)} cards, voice "{VOICE}" speaker {SPEAKER}'
         f'{" (dry run)" if args.dry_run else ""}'
     )
 
     if not args.dry_run:
-        model, convert = voice_model(), ffmpeg()
+        voice, convert = load_voice(), ffmpeg()
         AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
     updated = source
@@ -163,6 +243,7 @@ def main() -> None:
     for card_id, term in cards:
         file_name = f'{card_id}.{EXTENSION}'
         target = AUDIO_DIR / file_name
+        override = OVERRIDES.get(card_id, Override())
 
         if target.exists() and not args.force:
             print(f'  skip    {term}')
@@ -170,25 +251,11 @@ def main() -> None:
             print(f'  would record  {term} -> {file_name}')
             recorded += 1
         else:
-            raw = AUDIO_DIR / f'{card_id}.wav'
-            spoken = RESPELLINGS.get(card_id, term)
-            subprocess.run(
-                [sys.executable, '-m', 'piper', '--model', str(model),
-                 '--speaker', str(SPEAKER), '--output_file', str(raw)],
-                # The full stop matters: given a bare word the model has no
-                # sentence to end and clips the last syllable short.
-                input=f'{spoken}.', text=True, check=True, capture_output=True,
-            )
-            subprocess.run(
-                [convert, '-y', '-loglevel', 'error', '-i', str(raw),
-                 '-c:a', CODEC, '-b:a', BITRATE, '-ac', '1', str(target)],
-                check=True,
-            )
-            raw.unlink()
-            said = f' (said "{spoken}")' if spoken != term else ''
+            spoken = record(voice, term, override, target, convert)
+            note = f'  [{spoken}]' if card_id in OVERRIDES else ''
             print(
-                f'  record  {term}{said} -> {file_name} '
-                f'({target.stat().st_size // 1024} KB)'
+                f'  record  {term} -> {file_name} '
+                f'({target.stat().st_size // 1024} KB){note}'
             )
             recorded += 1
 
