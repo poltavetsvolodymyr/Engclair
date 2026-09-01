@@ -53,19 +53,25 @@ VOICE_URL = (
 )
 
 # The model improvises twice over: the length of every phoneme it speaks, and
-# the grain of the voice speaking it. Left free, the same word recorded twice
-# ran anywhere from 0.85 to 1.04 seconds and never twice the same waveform,
-# which quietly turns every comparison between two settings into a coin toss —
-# you cannot tell the change from the take.
+# the grain of the voice speaking it.
 #
-# Both pinned at zero, a term recorded today and recorded next year are the
-# same file, byte for byte. The clips stay committed, since they are what ships
-# and nothing should need a 120 MB model to serve the app, but they are no
-# longer irreplaceable: the script can make them again exactly. The flatter
-# delivery this costs was compared against a free take by ear and judged no
-# worse.
+# The lengths are pinned. Left free, the same word recorded twice ran anywhere
+# from 0.85 to 1.04 seconds, which quietly turns every comparison between two
+# settings into a coin toss — you cannot tell the change from the take. Pinned,
+# a term takes the same time to say every run.
+#
+# The grain is deliberately *not* pinned, though pinning it would make a clip
+# reproducible byte for byte. On a single word the flat delivery that costs is
+# barely audible, and it was judged no worse on one — but a definition is a
+# sentence, and a sentence keeps its intonation in exactly that variation. With
+# it gone the readings came out robotic. Reproducibility here is of timing, not
+# of the waveform.
 NOISE_W_SCALE = 0.0
-NOISE_SCALE = 0.0
+
+# The deck is read a little slower than the model's own pace: these are
+# recordings to learn a word from, not to be talked at. An override may go
+# slower still, never faster.
+LENGTH_SCALE = 1.2
 
 
 class Override(NamedTuple):
@@ -91,8 +97,8 @@ class Override(NamedTuple):
     # glide with them. Written out, the word is simply the dictionary's.
     phonemes: str = ''
 
-    # Above 1.0 the delivery slows. A word whose ending arrives as mush is
-    # usually one the model is racing through.
+    # Slower than the deck's own LENGTH_SCALE, for a word whose ending arrives
+    # as mush because the model is racing through it.
     length_scale: Optional[float] = None
 
 
@@ -216,8 +222,7 @@ def record(voice, term: str, override: Override, target: Path, convert: str) -> 
         voice.phonemes_to_ids(phonemes),
         syn_config=SynthesisConfig(
             speaker_id=SPEAKER,
-            length_scale=override.length_scale,
-            noise_scale=NOISE_SCALE,
+            length_scale=override.length_scale or LENGTH_SCALE,
             noise_w_scale=NOISE_W_SCALE,
         ),
     )

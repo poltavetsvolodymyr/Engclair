@@ -231,15 +231,18 @@ Each `components/X/` folder contains `X.tsx`, `X.module.css`,
   it, so "alleviate" came out `ɐlˈiːvɪʲˌeɪt`, and all thirty respellings that
   kept its four syllables kept the glide too. An override may also slow the
   delivery (`length_scale`), which is usually what a mushy ending needs.
-  **Recordings are reproducible, byte for byte.** The model improvises twice
-  over — the length of every phoneme and the grain of the voice — so the same
-  word twice ran anywhere from 0.85 to 1.04 seconds and never the same waveform,
-  and no comparison between two settings meant anything, because you could not
-  tell the change from the take. `NOISE_W_SCALE` and `NOISE_SCALE` pin both at
-  zero. The clips stay committed, since they are what ships and serving the app
-  should never need a 120 MB model, but they are no longer irreplaceable: run
-  the script and the same twenty files come back. The flatter delivery this
-  costs was compared against a free take by ear and judged no worse.
+  **Timing is reproducible; the grain of the voice is deliberately not.** The
+  model improvises both. Left free, the same word twice ran anywhere from 0.85
+  to 1.04 seconds, and no comparison between two settings meant anything — you
+  could not tell the change from the take — so `NOISE_W_SCALE` pins the lengths
+  and a clip takes the same time to say every run. Pinning the grain as well
+  would make the file identical byte for byte, and it was tried: on a single
+  word the flat delivery costs almost nothing, which is what one word was
+  allowed to decide. A definition is a sentence, and a sentence carries its
+  intonation in exactly that variation — with it pinned the readings came out
+  robotic. So it is left free, and reproducibility here means timing, not bytes.
+  The deck is also read slower than the model's own pace (`LENGTH_SCALE`):
+  these are recordings to learn a word from, not to be talked at.
   The model is driven directly rather than through the `piper` command, because
   the command takes only letters and some cards are recorded from phonemes.
   To redo one card, delete its file from `public/audio/` and run the script.
